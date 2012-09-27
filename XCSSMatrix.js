@@ -61,8 +61,8 @@ function determinant2x2(a, b, c, d) {
 function determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) {
 
     return a1 * determinant2x2(b2, b3, c2, c3) -
-	   b1 * determinant2x2(a2, a3, c2, c3) +
-	   c1 * determinant2x2(a2, a3, b2, b3);
+     b1 * determinant2x2(a2, a3, c2, c3) +
+     c1 * determinant2x2(a2, a3, b2, b3);
 }
 
 /**
@@ -73,17 +73,17 @@ function determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) {
  **/
 function determinant4x4(matrix) {
     var
-	m = matrix,
-	// Assign to individual variable names to aid selecting correct elements
-	a1 = m.m11, b1 = m.m21, c1 = m.m31, d1 = m.m41,
-	a2 = m.m12, b2 = m.m22, c2 = m.m32, d2 = m.m42,
-	a3 = m.m13, b3 = m.m23, c3 = m.m33, d3 = m.m43,
-	a4 = m.m14, b4 = m.m24, c4 = m.m34, d4 = m.m44;
+  m = matrix,
+  // Assign to individual variable names to aid selecting correct elements
+  a1 = m.m11, b1 = m.m21, c1 = m.m31, d1 = m.m41,
+  a2 = m.m12, b2 = m.m22, c2 = m.m32, d2 = m.m42,
+  a3 = m.m13, b3 = m.m23, c3 = m.m33, d3 = m.m43,
+  a4 = m.m14, b4 = m.m24, c4 = m.m34, d4 = m.m44;
 
     return a1 * determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4) -
-	   b1 * determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4) +
-	   c1 * determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4) -
-	   d1 * determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
+     b1 * determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4) +
+     c1 * determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4) -
+     d1 * determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
 }
 
 /**
@@ -98,9 +98,9 @@ function determinant4x4(matrix) {
  **/
 function toMatrixString(transformValue) {
     var rgx = {
-	functionSignature: /(\w+)\([^\)]+\)/ig,
-	nameAndArguments:  /(\w+)\(([^\)]+)\)/i,
-	units:             /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/
+  functionSignature: /(\w+)\([^\)]+\)/ig,
+  nameAndArguments:  /(\w+)\(([^\)]+)\)/i,
+  units:             /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/
     };
     var transformStatements = transformValue.match(/(\w+)\([^\)]+\)/ig);
     var transformIsMatrix   = function (t) { return (/^matrix/).test(t); };
@@ -109,126 +109,126 @@ function toMatrixString(transformValue) {
 
     var values = function (o) { return o.value; };
     var cssFunctionToJsFunction = {
-	matrix: function (m, o) {
-	    var m2 = new XCSSMatrix(o.unparsed);
+  matrix: function (m, o) {
+      var m2 = new XCSSMatrix(o.unparsed);
 
-	    return m.multiply(m2);
-	},
-	matrix3d: function (m, o) {
-	    var m2 = new XCSSMatrix(o.unparsed);
+      return m.multiply(m2);
+  },
+  matrix3d: function (m, o) {
+      var m2 = new XCSSMatrix(o.unparsed);
 
-	    return m.multiply(m2);
-	},
+      return m.multiply(m2);
+  },
 
-	perspective: function (m, o) {
-	    var m2 = new XCSSMatrix();
-	    m2.m34 -= 1 / o.value[0].value;
+  perspective: function (m, o) {
+      var m2 = new XCSSMatrix();
+      m2.m34 -= 1 / o.value[0].value;
 
-	    return m.multiply(m2);
-	},
+      return m.multiply(m2);
+  },
 
-	rotate: function (m, o) {
-	    return m.rotate.apply(m, o.value.map(values));
-	},
-	rotate3d: function (m, o) {
-	    return m.rotateAxisAngle.apply(m, o.value.map(values));
-	},
-	rotateX: function (m, o) {
-	    return m.rotate.apply(m, [o.value[0].value, 0, 0]);
-	},
-	rotateY: function (m, o) {
-	    return m.rotate.apply(m, [0, o.value[0].value, 0]);
-	},
-	rotateZ: function (m, o) {
-	    return m.rotate.apply(m, [0, 0, o.value[0].value]);
-	},
+  rotate: function (m, o) {
+      return m.rotate.apply(m, o.value.map(values));
+  },
+  rotate3d: function (m, o) {
+      return m.rotateAxisAngle.apply(m, o.value.map(values));
+  },
+  rotateX: function (m, o) {
+      return m.rotate.apply(m, [o.value[0].value, 0, 0]);
+  },
+  rotateY: function (m, o) {
+      return m.rotate.apply(m, [0, o.value[0].value, 0]);
+  },
+  rotateZ: function (m, o) {
+      return m.rotate.apply(m, [0, 0, o.value[0].value]);
+  },
 
-	scale: function (m, o) {
-	    return m.scale.apply(m, o.value.map(values));
-	},
-	scale3d: function (m, o) {
-	    return m.scale.apply(m, o.value.map(values));
-	},
-	scaleX: function (m, o) {
-	    return m.scale.apply(m, o.value.map(values));
-	},
-	scaleY: function (m, o) {
-	    return m.scale.apply(m, [0, o.value[0].value, 0]);
-	},
-	scaleZ: function (m, o) {
-	    return m.scale.apply(m, [0, 0, o.value[0].value]);
-	},
+  scale: function (m, o) {
+      return m.scale.apply(m, o.value.map(values));
+  },
+  scale3d: function (m, o) {
+      return m.scale.apply(m, o.value.map(values));
+  },
+  scaleX: function (m, o) {
+      return m.scale.apply(m, o.value.map(values));
+  },
+  scaleY: function (m, o) {
+      return m.scale.apply(m, [0, o.value[0].value, 0]);
+  },
+  scaleZ: function (m, o) {
+      return m.scale.apply(m, [0, 0, o.value[0].value]);
+  },
 
-	skew: function (m, o) {
-	    var mX = new XCSSMatrix('skewX(' + o.value[0].unparsed + ')');
-	    var mY = new XCSSMatrix('skewY(' + o.value[1].unparsed + ')');
-	    var sM = 'matrix(1.00000, '+ mY.b +', '+ mX.c +', 1.000000, 0.000000, 0.000000)';
-	    var m2 = new XCSSMatrix(sM);
+  skew: function (m, o) {
+      var mX = new XCSSMatrix('skewX(' + o.value[0].unparsed + ')');
+      var mY = new XCSSMatrix('skewY(' + o.value[1].unparsed + ')');
+      var sM = 'matrix(1.00000, '+ mY.b +', '+ mX.c +', 1.000000, 0.000000, 0.000000)';
+      var m2 = new XCSSMatrix(sM);
 
-	    return m.multiply(m2);
-	},
-	skewX: function (m, o) {
-	    return m.skewX.apply(m, [o.value[0].value]);
-	},
-	skewY: function (m, o) {
-	    return m.skewY.apply(m, [o.value[0].value]);
-	},
+      return m.multiply(m2);
+  },
+  skewX: function (m, o) {
+      return m.skewX.apply(m, [o.value[0].value]);
+  },
+  skewY: function (m, o) {
+      return m.skewY.apply(m, [o.value[0].value]);
+  },
 
-	translate: function (m, o) {
-	    return m.translate.apply(m, o.value.map(values));
-	},
-	translate3d: function (m, o) {
-	    return m.translate.apply(m, o.value.map(values));
-	},
-	translateX: function (m, o) {
-	    return m.translate.apply(m, [o.value[0].value, 0, 0]);
-	},
-	translateY: function (m, o) {
-	    return m.translate.apply(m, [0, o.value[0].value, 0]);
-	},
-	translateZ: function (m, o) {
-	    return m.translate.apply(m, [0, 0, o.value[0].value]);
-	}
+  translate: function (m, o) {
+      return m.translate.apply(m, o.value.map(values));
+  },
+  translate3d: function (m, o) {
+      return m.translate.apply(m, o.value.map(values));
+  },
+  translateX: function (m, o) {
+      return m.translate.apply(m, [o.value[0].value, 0, 0]);
+  },
+  translateY: function (m, o) {
+      return m.translate.apply(m, [0, o.value[0].value, 0]);
+  },
+  translateZ: function (m, o) {
+      return m.translate.apply(m, [0, 0, o.value[0].value]);
+  }
     };
     var parseTransformStatement = function (str) {
-	var pair = str.match(rgx.nameAndArguments).slice(1);
+  var pair = str.match(rgx.nameAndArguments).slice(1);
 
-	return {
-	    key: pair[0],
-	    value: pair[1].split(/, ?/).map(function (value) {
-		var parts = value.match(rgx.units) || [];
+  return {
+      key: pair[0],
+      value: pair[1].split(/, ?/).map(function (value) {
+    var parts = value.match(rgx.units) || [];
 
-		return {
-		    value: parseFloat(parts[1]),
-		    units: parts[2],
-		    unparsed: value
-		};
-	    }),
-	    unparsed: str
-	};
+    return {
+        value: parseFloat(parts[1]),
+        units: parts[2],
+        unparsed: value
+    };
+      }),
+      unparsed: str
+  };
     };
 
     var transformOperations = transformStatements.map(parseTransformStatement);
     var startingMatrix = new XCSSMatrix();
     var transformedMatrix = transformOperations.reduce(function (matrix, operation) {
-	// convert to degrees b/c all CSSMatrix methods expect degrees
-	operation.value = operation.value.map(function (operation) {
-	    if (operation.units == 'rad') {
-		operation.value = operation.value * (180 / Math.PI);
-		operation.units = 'deg';
-	    }
-	    else if (operation.units == 'grad') {
-		operation.value = operation.value / (400 / 360); // 400 gradians in 360 degrees
-		operation.units = 'deg';
-	    }
+  // convert to degrees b/c all CSSMatrix methods expect degrees
+  operation.value = operation.value.map(function (operation) {
+      if (operation.units == 'rad') {
+    operation.value = operation.value * (180 / Math.PI);
+    operation.units = 'deg';
+      }
+      else if (operation.units == 'grad') {
+    operation.value = operation.value / (400 / 360); // 400 gradians in 360 degrees
+    operation.units = 'deg';
+      }
 
-	    return operation;
-	});
+      return operation;
+  });
 
-	var jsFunction = cssFunctionToJsFunction[operation.key];
-	var result = jsFunction(matrix, operation);
+  var jsFunction = cssFunctionToJsFunction[operation.key];
+  var result = jsFunction(matrix, operation);
 
-	return result || matrix;
+  return result || matrix;
     }, startingMatrix);
 
     return transformedMatrix.toString();
@@ -241,10 +241,10 @@ function toMatrixString(transformValue) {
  **/
 function isAffine(matrix) {
     return matrix.m13 === 0 && matrix.m14 === 0 &&
-	   matrix.m23 === 0 && matrix.m24 === 0 &&
-	   matrix.m31 === 0 && matrix.m32 === 0 &&
-	   matrix.m33 === 1 && matrix.m34 === 0 &&
-	   matrix.m43 === 0 && matrix.m44 === 1;
+     matrix.m23 === 0 && matrix.m24 === 0 &&
+     matrix.m31 === 0 && matrix.m32 === 0 &&
+     matrix.m33 === 1 && matrix.m34 === 0 &&
+     matrix.m43 === 0 && matrix.m44 === 1;
 }
 
 /**
@@ -256,8 +256,8 @@ function isIdentityOrTranslation(matrix) {
     var m = matrix;
 
     return m.m11 === 1 && m.m12 === 0 && m.m13 === 0 && m.m14 === 0 &&
-	   m.m21 === 0 && m.m22 === 1 && m.m23 === 0 && m.m24 === 0 &&
-	   m.m31 === 0 && m.m31 === 0 && m.m33 === 1 && m.m34 === 0 &&
+     m.m21 === 0 && m.m22 === 1 && m.m23 === 0 && m.m24 === 0 &&
+     m.m31 === 0 && m.m31 === 0 && m.m33 === 1 && m.m34 === 0 &&
     /* m41, m42 and m43 are the translation points */   m.m44 === 1;
 }
 
@@ -268,12 +268,12 @@ function isIdentityOrTranslation(matrix) {
  **/
 function adjoint(matrix) {
     var m = matrix,
-	result = new XCSSMatrix(),
+  result = new XCSSMatrix(),
 
-	a1 = m.m11, b1 = m.m12, c1 = m.m13, d1 = m.m14,
-	a2 = m.m21, b2 = m.m22, c2 = m.m23, d2 = m.m24,
-	a3 = m.m31, b3 = m.m32, c3 = m.m33, d3 = m.m34,
-	a4 = m.m41, b4 = m.m42, c4 = m.m43, d4 = m.m44;
+  a1 = m.m11, b1 = m.m12, c1 = m.m13, d1 = m.m14,
+  a2 = m.m21, b2 = m.m22, c2 = m.m23, d2 = m.m24,
+  a3 = m.m31, b3 = m.m32, c3 = m.m33, d3 = m.m34,
+  a4 = m.m41, b4 = m.m42, c4 = m.m43, d4 = m.m44;
 
     // Row column labeling reversed since we transpose rows & columns
     result.m11 =  determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4);
@@ -418,13 +418,13 @@ function adjoint(matrix) {
 function XCSSMatrix(domstr) {
     this.m11 = this.m22 = this.m33 = this.m44 = 1;
 
-	       this.m12 = this.m13 = this.m14 =
+         this.m12 = this.m13 = this.m14 =
     this.m21 =            this.m23 = this.m24 =
     this.m31 = this.m32 =            this.m34 =
     this.m41 = this.m42 = this.m43            = 0;
 
     if (typeof domstr == "string") {
-	this.setMatrixValue(domstr);
+  this.setMatrixValue(domstr);
     }
 }
 
@@ -442,15 +442,15 @@ XCSSMatrix.displayName = "XCSSMatrix";
     var key3d = pair[0], key2d = pair[1];
 
     Object.defineProperty(XCSSMatrix.prototype, key2d, {
-	set: function (val) {
-	    this[key3d] = val;
-	},
+  set: function (val) {
+      this[key3d] = val;
+  },
 
-	get: function () {
-	    return this[key3d];
-	},
-	enumerable : true,
-	configurable : true
+  get: function () {
+      return this[key3d];
+  },
+  enumerable : true,
+  configurable : true
     });
 });
 
@@ -465,8 +465,8 @@ XCSSMatrix.prototype.multiply = function (otherMatrix) {
     if (!otherMatrix) return null;
 
     var a = otherMatrix,
-	b = this,
-	c = new XCSSMatrix();
+  b = this,
+  c = new XCSSMatrix();
 
     c.m11 = a.m11 * b.m11 + a.m12 * b.m21 + a.m13 * b.m31 + a.m14 * b.m41;
     c.m12 = a.m11 * b.m12 + a.m12 * b.m22 + a.m13 * b.m32 + a.m14 * b.m42;
@@ -500,15 +500,15 @@ XCSSMatrix.prototype.inverse = function () {
     var inv, det, result, i, j;
 
     if (isIdentityOrTranslation(this)) {
-	inv = new XCSSMatrix();
+  inv = new XCSSMatrix();
 
-	if (!(this.m41 === 0 && this.m42 === 0 && this.m43 === 0)) {
-	    inv.m41 = -this.m41;
-	    inv.m42 = -this.m42;
-	    inv.m43 = -this.m43;
-	}
+  if (!(this.m41 === 0 && this.m42 === 0 && this.m43 === 0)) {
+      inv.m41 = -this.m41;
+      inv.m42 = -this.m42;
+      inv.m43 = -this.m43;
+  }
 
-	return inv;
+  return inv;
     }
 
     // Calculate the adjoint matrix
@@ -522,9 +522,9 @@ XCSSMatrix.prototype.inverse = function () {
 
     // Scale the adjoint matrix to get the inverse
     for (i = 1; i < 5; i++) {
-	for (j = 1; j < 5; j++) {
-	    result[("m" + i) + j] /= det;
-	}
+  for (j = 1; j < 5; j++) {
+      result[("m" + i) + j] /= det;
+  }
     }
 
     return result;
@@ -548,10 +548,10 @@ XCSSMatrix.prototype.rotate = function (rx, ry, rz) {
     if (typeof rx != "number" || isNaN(rx)) rx = 0;
 
     if ((typeof ry != "number" || isNaN(ry)) &&
-	(typeof rz != "number" || isNaN(rz))) {
-	rz = rx;
-	rx = 0;
-	ry = 0;
+  (typeof rz != "number" || isNaN(rz))) {
+  rz = rx;
+  rx = 0;
+  ry = 0;
     }
 
     if (typeof ry != "number" || isNaN(ry)) ry = 0;
@@ -562,9 +562,9 @@ XCSSMatrix.prototype.rotate = function (rx, ry, rz) {
     rz = degreesToRadians(rz);
 
     var tx = new XCSSMatrix(),
-	ty = new XCSSMatrix(),
-	tz = new XCSSMatrix(),
-	sinA, cosA, sinA2;
+  ty = new XCSSMatrix(),
+  tz = new XCSSMatrix(),
+  sinA, cosA, sinA2;
 
     rz /= 2;
     sinA = Math.sin(rz);
@@ -597,8 +597,8 @@ XCSSMatrix.prototype.rotate = function (rx, ry, rz) {
     var isIdentity = (this.toString() === (new XCSSMatrix).toString());
 
     return (isIdentity)
-	? tz.multiply(ty).multiply(tx)
-	: this.multiply(tx).multiply(ty).multiply(tz);
+  ? tz.multiply(ty).multiply(tx)
+  : this.multiply(tx).multiply(ty).multiply(tz);
 };
 
 /**
@@ -624,8 +624,8 @@ XCSSMatrix.prototype.rotateAxisAngle = function (x, y, z, a) {
     if (x === 0 && y === 0 && z === 0) z = 1;
 
     var t   = new XCSSMatrix(),
-	len = Math.sqrt(x * x + y * y + z * z),
-	cosA, sinA, sinA2, csA, x2, y2, z2;
+  len = Math.sqrt(x * x + y * y + z * z),
+  cosA, sinA, sinA2, csA, x2, y2, z2;
 
     a     = (degreesToRadians(a) || 0) / 2;
     cosA  = Math.cos(a);
@@ -634,43 +634,43 @@ XCSSMatrix.prototype.rotateAxisAngle = function (x, y, z, a) {
 
     // Bad vector, use something sensible
     if (len === 0) {
-	x = 0;
-	y = 0;
-	z = 1;
+  x = 0;
+  y = 0;
+  z = 1;
     } else if (len !== 1) {
-	x /= len;
-	y /= len;
-	z /= len;
+  x /= len;
+  y /= len;
+  z /= len;
     }
 
     // Optimise cases where axis is along major axis
     if (x === 1 && y === 0 && z === 0) {
-	t.m22 = t.m33 = 1 - 2 * sinA2;
-	t.m23 = t.m32 = 2 * cosA * sinA;
-	t.m32 *= -1;
+  t.m22 = t.m33 = 1 - 2 * sinA2;
+  t.m23 = t.m32 = 2 * cosA * sinA;
+  t.m32 *= -1;
     } else if (x === 0 && y === 1 && z === 0) {
-	t.m11 = t.m33 = 1 - 2 * sinA2;
-	t.m13 = t.m31 = 2 * cosA * sinA;
-	t.m13 *= -1;
+  t.m11 = t.m33 = 1 - 2 * sinA2;
+  t.m13 = t.m31 = 2 * cosA * sinA;
+  t.m13 *= -1;
     } else if (x === 0 && y === 0 && z === 1) {
-	t.m11 = t.m22 = 1 - 2 * sinA2;
-	t.m12 = t.m21 = 2 * cosA * sinA;
-	t.m21 *= -1;
+  t.m11 = t.m22 = 1 - 2 * sinA2;
+  t.m12 = t.m21 = 2 * cosA * sinA;
+  t.m21 *= -1;
     } else {
-	csA = sinA * cosA;
-	x2  = x * x;
-	y2  = y * y;
-	z2  = z * z;
+  csA = sinA * cosA;
+  x2  = x * x;
+  y2  = y * y;
+  z2  = z * z;
 
-	t.m11 = 1 - 2 * (y2 + z2) * sinA2;
-	t.m12 = 2 * (x * y * sinA2 + z * csA);
-	t.m13 = 2 * (x * z * sinA2 - y * csA);
-	t.m21 = 2 * (y * x * sinA2 - z * csA);
-	t.m22 = 1 - 2 * (z2 + x2) * sinA2;
-	t.m23 = 2 * (y * z * sinA2 + x * csA);
-	t.m31 = 2 * (z * x * sinA2 + y * csA);
-	t.m32 = 2 * (z * y * sinA2 - x * csA);
-	t.m33 = 1 - 2 * (x2 + y2) * sinA2;
+  t.m11 = 1 - 2 * (y2 + z2) * sinA2;
+  t.m12 = 2 * (x * y * sinA2 + z * csA);
+  t.m13 = 2 * (x * z * sinA2 - y * csA);
+  t.m21 = 2 * (y * x * sinA2 - z * csA);
+  t.m22 = 1 - 2 * (z2 + x2) * sinA2;
+  t.m23 = 2 * (y * z * sinA2 + x * csA);
+  t.m31 = 2 * (z * x * sinA2 + y * csA);
+  t.m32 = 2 * (z * y * sinA2 - x * csA);
+  t.m33 = 1 - 2 * (x2 + y2) * sinA2;
     }
 
     return this.multiply(t);
@@ -763,9 +763,9 @@ XCSSMatrix.prototype.translate = function (x, y, z) {
  *  by the [[XCSSMatrix#toString]] method.
  **/
 XCSSMatrix.prototype.setMatrixValue = function (domstr) {
-	domstr = toMatrixString(domstr.trim());
+  domstr = toMatrixString(domstr.trim());
     var mstr   = domstr.match(/^matrix(3d)?\(\s*(.+)\s*\)$/),
-	is3d, chunks, len, points, i, chunk;
+  is3d, chunks, len, points, i, chunk;
 
     if (!mstr) return;
 
@@ -777,17 +777,17 @@ XCSSMatrix.prototype.setMatrixValue = function (domstr) {
     if ((is3d && len !== 16) || !(is3d || len === 6)) return;
 
     for (i = 0; i < len; i++) {
-	chunk = chunks[i];
-	if (chunk.match(/^-?\d+(\.\d+)?$/)) {
-	    points[i] = parseFloat(chunk);
-	} else return;
+  chunk = chunks[i];
+  if (chunk.match(/^-?\d+(\.\d+)?$/)) {
+      points[i] = parseFloat(chunk);
+  } else return;
     }
 
     for (i = 0; i < len; i++) {
-	point = is3d ?
-	    ("m" + (Math.floor(i / 4) + 1)) + (i % 4 + 1) :
-	    String.fromCharCode(i + 97); // ASCII char 97 == 'a'
-	this[point] = points[i];
+  point = is3d ?
+      ("m" + (Math.floor(i / 4) + 1)) + (i % 4 + 1) :
+      String.fromCharCode(i + 97); // ASCII char 97 == 'a'
+  this[point] = points[i];
     }
 };
 
@@ -800,18 +800,18 @@ XCSSMatrix.prototype.toString = function () {
     var points, prefix;
 
     if (isAffine(this)) {
-	prefix = "matrix(";
-	points = ["a", "b", "c", "d", "e", "f"];
+  prefix = "matrix(";
+  points = ["a", "b", "c", "d", "e", "f"];
     } else {
-	prefix = "matrix3d(";
-	points = ["m11", "m12", "m13", "m14",
-		  "m21", "m22", "m23", "m24",
-		  "m31", "m32", "m33", "m34",
-		  "m41", "m42", "m43", "m44"];
+  prefix = "matrix3d(";
+  points = ["m11", "m12", "m13", "m14",
+      "m21", "m22", "m23", "m24",
+      "m31", "m32", "m33", "m34",
+      "m41", "m42", "m43", "m44"];
     }
 
     return prefix + points.map(function (p) {
-	return this[p].toFixed(6);
+  return this[p].toFixed(6);
     }, this).join(", ") + ")";
 };
 
