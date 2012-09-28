@@ -1,329 +1,24 @@
+(function () {
 /**
  *  class XCSSMatrix
  *
- *  The [[XCSSMatrix]] class is a spec-compliant implementation of the
- *  `CSSMatrix` interface defined in the [CSS 2D Transforms][2d] and
+ *  The [[XCSSMatrix]] class is intended to be a spec-compliant implementation
+ *  of the `CSSMatrix` interface defined in the [CSS 2D Transforms][2d] and
  *  [CSS 3D Transforms][3d] Module specifications.
  *
  *  [2d]: http://www.w3.org/TR/2011/WD-css3-2d-transforms-20111215/#cssmatrix-interface
  *  [3d]: http://www.w3.org/TR/2009/WD-css3-3d-transforms-20090320/#cssmatrix-interface
  *
- *  The implementation was largely copied from [Firmin][firmin]'s `FirminCSSMatrix`
- *  object (which was based on the `WebKitCSSMatrix` class, and the supporting
- *  math libraries in the [WebKit][webkit] project. This is one reason why much
- *  of the code looks more like C++ than JavaScript.
- *
+ *  The implementation was largely copied from [Firmin][firmin]'s
+ *  `FirminCSSMatrix` object.
  *  [firmin]: [http://extralogical.net/projects/firmin/]
- *  [webkit]: http://webkit.org/
  *
- *  It's API is intended to match the spec. Tests have been copied from the
- *  WebKit source. Please create tickets (and/or tests) for any failing cases.
+ *  Its API is intended to match the spec. Tests have been copied from the
+ *  WebKit tests for [2D](2dtests) and [3D](3dtests). Please create tickets
+ * (and/or tests) for any failing cases.
+ * [2dtests]: [http://src.chromium.org/svn/branches/WebKit/472/LayoutTests/transforms/cssmatrix-2d-interface.xhtml]
+ * [3dtests]: [http://src.chromium.org/svn/branches/WebKit/472/LayoutTests/transforms/cssmatrix-3d-interface.xhtml]
  **/
-
-/**
- *  determinant2x2(a, b, c, d) -> Number
- *  - a (Number): top-left value of the matrix.
- *  - b (Number): top-right value of the matrix.
- *  - c (Number): bottom-left value of the matrix.
- *  - d (Number): bottom-right value of the matrix.
- *
- *  Calculates the determinant of a 2x2 matrix.
- **/
-function determinant2x2(a, b, c, d) {
-    return a * d - b * c;
-}
-
-/**
- *  determinant3x3(matrix) -> Number
- *  - a1 (Number): matrix value in position [1, 1].
- *  - a2 (Number): matrix value in position [1, 2].
- *  - a3 (Number): matrix value in position [1, 3].
- *  - b1 (Number): matrix value in position [2, 1].
- *  - b2 (Number): matrix value in position [2, 2].
- *  - b3 (Number): matrix value in position [2, 3].
- *  - c1 (Number): matrix value in position [3, 1].
- *  - c2 (Number): matrix value in position [3, 2].
- *  - c3 (Number): matrix value in position [3, 3].
- *
- *  Calculates the determinant of a 3x3 matrix.
- **/
-function determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) {
-
-    return a1 * determinant2x2(b2, b3, c2, c3) -
-           b1 * determinant2x2(a2, a3, c2, c3) +
-           c1 * determinant2x2(a2, a3, b2, b3);
-}
-
-/**
- *  determinant4x4(matrix) -> Number
- *  - matrix (XCSSMatrix): the matrix to calculate the determinant of.
- *
- *  Calculates the determinant of a 4x4 matrix.
- **/
-function determinant4x4(matrix) {
-    var
-        m = matrix,
-        // Assign to individual variable names to aid selecting correct elements
-        a1 = m.m11, b1 = m.m21, c1 = m.m31, d1 = m.m41,
-        a2 = m.m12, b2 = m.m22, c2 = m.m32, d2 = m.m42,
-        a3 = m.m13, b3 = m.m23, c3 = m.m33, d3 = m.m43,
-        a4 = m.m14, b4 = m.m24, c4 = m.m34, d4 = m.m44;
-
-    return a1 * determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4) -
-           b1 * determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4) +
-           c1 * determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4) -
-           d1 * determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
-}
-
-/**
- *  isAffine() -> Boolean
- *
- *  Determines whether the matrix is affine.
- **/
-function isAffine(matrix) {
-    return matrix.m13 === 0 && matrix.m14 === 0 &&
-           matrix.m23 === 0 && matrix.m24 === 0 &&
-           matrix.m31 === 0 && matrix.m32 === 0 &&
-           matrix.m33 === 1 && matrix.m34 === 0 &&
-           matrix.m43 === 0 && matrix.m44 === 1;
-}
-
-/**
- *  isIdentityOrTranslation() -> Boolean
- *
- *  Returns whether the matrix is the identity matrix or a translation matrix.
- **/
-function isIdentityOrTranslation(matrix) {
-    var m = matrix;
-
-    return m.m11 === 1 && m.m12 === 0 && m.m13 === 0 && m.m14 === 0 &&
-           m.m21 === 0 && m.m22 === 1 && m.m23 === 0 && m.m24 === 0 &&
-           m.m31 === 0 && m.m31 === 0 && m.m33 === 1 && m.m34 === 0 &&
-    /* m41, m42 and m43 are the translation points */   m.m44 === 1;
-}
-
-/**
- *  adjoint() -> XCSSMatrix
- *
- *  Returns the adjoint matrix.
- **/
-function adjoint(matrix) {
-    var m = matrix,
-        result = new XCSSMatrix(),
-
-        a1 = m.m11, b1 = m.m12, c1 = m.m13, d1 = m.m14,
-        a2 = m.m21, b2 = m.m22, c2 = m.m23, d2 = m.m24,
-        a3 = m.m31, b3 = m.m32, c3 = m.m33, d3 = m.m34,
-        a4 = m.m41, b4 = m.m42, c4 = m.m43, d4 = m.m44;
-
-    // Row column labeling reversed since we transpose rows & columns
-    result.m11 =  determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4);
-    result.m21 = -determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4);
-    result.m31 =  determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4);
-    result.m41 = -determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
-
-    result.m12 = -determinant3x3(b1, b3, b4, c1, c3, c4, d1, d3, d4);
-    result.m22 =  determinant3x3(a1, a3, a4, c1, c3, c4, d1, d3, d4);
-    result.m32 = -determinant3x3(a1, a3, a4, b1, b3, b4, d1, d3, d4);
-    result.m42 =  determinant3x3(a1, a3, a4, b1, b3, b4, c1, c3, c4);
-
-    result.m13 =  determinant3x3(b1, b2, b4, c1, c2, c4, d1, d2, d4);
-    result.m23 = -determinant3x3(a1, a2, a4, c1, c2, c4, d1, d2, d4);
-    result.m33 =  determinant3x3(a1, a2, a4, b1, b2, b4, d1, d2, d4);
-    result.m43 = -determinant3x3(a1, a2, a4, b1, b2, b4, c1, c2, c4);
-
-    result.m14 = -determinant3x3(b1, b2, b3, c1, c2, c3, d1, d2, d3);
-    result.m24 =  determinant3x3(a1, a2, a3, c1, c2, c3, d1, d2, d3);
-    result.m34 = -determinant3x3(a1, a2, a3, b1, b2, b3, d1, d2, d3);
-    result.m44 =  determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3);
-
-    return result;
-}
-
-/**
- *  XCSSMatrix.degreesToRadians(angle) -> Number
- *  - angle (Number): an angle in degrees.
- *
- *  Converts angles in degrees, which are used by the external API, to angles
- *  in radians used in internal calculations.
- **/
-function degreesToRadians(angle) {
-    return angle * Math.PI / 180;
-}
-
-/* ============ */
-function pluck(obj, key) {
-    return obj[key];
-}
-
-function pluckValues(o) {
-
-    return function () {
-        return pluck(o, 'value');
-    };
-}
-
-function cssFunctionToJsFunction(cssFunctionName) {
-
-    return ({
-        matrix: function (m, o) {
-            var m2 = new XCSSMatrix(o.unparsed);
-
-            return m.multiply(m2);
-        },
-        matrix3d: function (m, o) {
-            var m2 = new XCSSMatrix(o.unparsed);
-
-            return m.multiply(m2);
-        },
-
-        perspective: function (m, o) {
-            var m2 = new XCSSMatrix();
-            m2.m34 -= 1 / o.value[0].value;
-
-            return m.multiply(m2);
-        },
-
-        rotate: function (m, o) {
-            return m.rotate.apply(m, o.value.map(pluckValues));
-        },
-        rotate3d: function (m, o) {
-            return m.rotateAxisAngle.apply(m, o.value.map(pluckValues));
-        },
-        rotateX: function (m, o) {
-            return m.rotate.apply(m, [o.value[0].value, 0, 0]);
-        },
-        rotateY: function (m, o) {
-            return m.rotate.apply(m, [0, o.value[0].value, 0]);
-        },
-        rotateZ: function (m, o) {
-            return m.rotate.apply(m, [0, 0, o.value[0].value]);
-        },
-
-        scale: function (m, o) {
-            return m.scale.apply(m, o.value.map(pluckValues));
-        },
-        scale3d: function (m, o) {
-            return m.scale.apply(m, o.value.map(pluckValues));
-        },
-        scaleX: function (m, o) {
-            return m.scale.apply(m, o.value.map(pluckValues));
-        },
-        scaleY: function (m, o) {
-            return m.scale.apply(m, [0, o.value[0].value, 0]);
-        },
-        scaleZ: function (m, o) {
-            return m.scale.apply(m, [0, 0, o.value[0].value]);
-        },
-
-        skew: function (m, o) {
-            var mX = new XCSSMatrix('skewX(' + o.value[0].unparsed + ')');
-            var mY = new XCSSMatrix('skewY(' + o.value[1].unparsed + ')');
-            var sM = 'matrix(1.00000, '+ mY.b +', '+ mX.c +', 1.000000, 0.000000, 0.000000)';
-            var m2 = new XCSSMatrix(sM);
-
-            return m.multiply(m2);
-        },
-        skewX: function (m, o) {
-            return m.skewX.apply(m, [o.value[0].value]);
-        },
-        skewY: function (m, o) {
-            return m.skewY.apply(m, [o.value[0].value]);
-        },
-
-        translate: function (m, o) {
-            return m.translate.apply(m, o.value.map(pluckValues));
-        },
-        translate3d: function (m, o) {
-            return m.translate.apply(m, o.value.map(pluckValues));
-        },
-        translateX: function (m, o) {
-            return m.translate.apply(m, [o.value[0].value, 0, 0]);
-        },
-        translateY: function (m, o) {
-            return m.translate.apply(m, [0, o.value[0].value, 0]);
-        },
-        translateZ: function (m, o) {
-            return m.translate.apply(m, [0, 0, o.value[0].value]);
-        }
-    })[cssFunctionName];
-}
-
-function parsedToDegrees(parsed) {
-
-    if (parsed.units == 'rad') {
-        parsed.value = parsed.value * (180 / Math.PI);
-        parsed.units = 'deg';
-    }
-    else if (parsed.units == 'grad') {
-        parsed.value = parsed.value / (400 / 360); // 400 gradians in 360 degrees
-        parsed.units = 'deg';
-    }
-
-    return parsed;
-}
-
-function parseTransformValue(value) {
-
-    var units = /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/;
-    var parts = value.match(units) || [];
-
-    return {
-        value: parseFloat(parts[1]),
-        units: parts[2],
-        unparsed: value
-    };
-}
-
-function parseTransformStatement(statement) {
-
-    var nameAndArgs = /(\w+)\(([^\)]+)\)/i;
-    var pair        = statement.match(nameAndArgs).slice(1);
-
-    return {
-        key: pair[0],
-        value: pair[1].split(/, ?/).map(parseTransformValue),
-        unparsed: statement
-    };
-}
-
-function transformMatrix(matrix, operation) {
-
-    // convert to degrees because all CSSMatrix methods expect degrees
-    operation.value = operation.value.map(parsedToDegrees);
-
-    var jsFunction = cssFunctionToJsFunction(operation.key);
-    var result     = jsFunction(matrix, operation);
-
-    return result || matrix;
-}
-
-/**
- * @private
- * XCSSMatrix.toMatrixString(transformString) -> String
- * - transformString (String): `el.style.WebkitTransform`-style string (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
- *
- * Tranforms a `el.style.WebkitTransform`-style string
- * (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
- * into a `getComputedStyle(el)`-style matrix string
- * (like `matrix3d(0.6603167082440828, -0.7509872467716737, 0, 0, 0.7509872467716737, 0.6603167082440828, 0, 0, 0, 0, 1, 0, 108.11456008937151, 28.482308485824596, 10, 1)`)
- **/
-function toMatrixString(transformString) {
-
-    var functionSignature   = /(\w+)\([^\)]+\)/ig;
-    var transformStatements = transformString.match(functionSignature);
-    var statementIsMatrix   = function (t) { return (/^matrix/).test(t); };
-    var onlyMatrices        = transformStatements && transformStatements.every(statementIsMatrix);
-
-    if (!transformStatements || onlyMatrices) return transformString;
-
-    var transformOperations = transformStatements.map(parseTransformStatement);
-    var startingMatrix      = new XCSSMatrix();
-    var transformedMatrix   = transformOperations.reduce(transformMatrix, startingMatrix);
-    var matrixString        = transformedMatrix.toString();
-
-    return matrixString;
-}
 
 /**
  *  XCSSMatrix#a -> Number
@@ -593,8 +288,8 @@ XCSSMatrix.prototype.rotate = function (rx, ry, rz) {
         sinA, cosA, sinA2;
 
     rz /= 2;
-    sinA = Math.sin(rz);
-    cosA = Math.cos(rz);
+    sinA  = Math.sin(rz);
+    cosA  = Math.cos(rz);
     sinA2 = sinA * sinA;
 
     // Matrices are identity outside the assigned values
@@ -789,10 +484,10 @@ XCSSMatrix.prototype.translate = function (x, y, z) {
  *  by the [[XCSSMatrix#toString]] method.
  **/
 XCSSMatrix.prototype.setMatrixValue = function (domstr) {
-        domstr = toMatrixString(domstr.trim());
 
-    var matrixOnly  = /^matrix(3d)?\(\s*(.+)\s*\)$/;
-    var matrixParts = domstr.match(matrixOnly);
+    var matrixString = toMatrixString(domstr.trim());
+    var matrixOnly   = /^matrix(3d)?\(\s*(.+)\s*\)$/;
+    var matrixParts  = matrixString.match(matrixOnly);
 
     if (!matrixParts) return;
 
@@ -842,4 +537,359 @@ XCSSMatrix.prototype.toString = function () {
     }, this).join(", ") + ")";
 };
 
-if (typeof module !== "undefined") module.exports = XCSSMatrix;
+// provide `XCSSMatrix` for use in browser, CommonJS, AMD and NodeJS
+expose('XCSSMatrix', XCSSMatrix);
+
+/* ====== Matrix utility functions ====== */
+/**
+ *  determinant2x2(a, b, c, d) -> Number
+ *  - a (Number): top-left value of the matrix.
+ *  - b (Number): top-right value of the matrix.
+ *  - c (Number): bottom-left value of the matrix.
+ *  - d (Number): bottom-right value of the matrix.
+ *
+ *  Calculates the determinant of a 2x2 matrix.
+ **/
+function determinant2x2(a, b, c, d) {
+    return a * d - b * c;
+}
+
+/**
+ *  determinant3x3(matrix) -> Number
+ *  - a1 (Number): matrix value in position [1, 1].
+ *  - a2 (Number): matrix value in position [1, 2].
+ *  - a3 (Number): matrix value in position [1, 3].
+ *  - b1 (Number): matrix value in position [2, 1].
+ *  - b2 (Number): matrix value in position [2, 2].
+ *  - b3 (Number): matrix value in position [2, 3].
+ *  - c1 (Number): matrix value in position [3, 1].
+ *  - c2 (Number): matrix value in position [3, 2].
+ *  - c3 (Number): matrix value in position [3, 3].
+ *
+ *  Calculates the determinant of a 3x3 matrix.
+ **/
+function determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) {
+
+    return a1 * determinant2x2(b2, b3, c2, c3) -
+           b1 * determinant2x2(a2, a3, c2, c3) +
+           c1 * determinant2x2(a2, a3, b2, b3);
+}
+
+/**
+ *  determinant4x4(matrix) -> Number
+ *  - matrix (XCSSMatrix): the matrix to calculate the determinant of.
+ *
+ *  Calculates the determinant of a 4x4 matrix.
+ **/
+function determinant4x4(matrix) {
+    var
+        m = matrix,
+        // Assign to individual variable names to aid selecting correct elements
+        a1 = m.m11, b1 = m.m21, c1 = m.m31, d1 = m.m41,
+        a2 = m.m12, b2 = m.m22, c2 = m.m32, d2 = m.m42,
+        a3 = m.m13, b3 = m.m23, c3 = m.m33, d3 = m.m43,
+        a4 = m.m14, b4 = m.m24, c4 = m.m34, d4 = m.m44;
+
+    return a1 * determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4) -
+           b1 * determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4) +
+           c1 * determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4) -
+           d1 * determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
+}
+
+/**
+ *  isAffine() -> Boolean
+ *
+ *  Determines whether the matrix is affine.
+ **/
+function isAffine(matrix) {
+    return matrix.m13 === 0 && matrix.m14 === 0 &&
+           matrix.m23 === 0 && matrix.m24 === 0 &&
+           matrix.m31 === 0 && matrix.m32 === 0 &&
+           matrix.m33 === 1 && matrix.m34 === 0 &&
+           matrix.m43 === 0 && matrix.m44 === 1;
+}
+
+/**
+ *  isIdentityOrTranslation() -> Boolean
+ *
+ *  Returns whether the matrix is the identity matrix or a translation matrix.
+ **/
+function isIdentityOrTranslation(matrix) {
+    var m = matrix;
+
+    return m.m11 === 1 && m.m12 === 0 && m.m13 === 0 && m.m14 === 0 &&
+           m.m21 === 0 && m.m22 === 1 && m.m23 === 0 && m.m24 === 0 &&
+           m.m31 === 0 && m.m31 === 0 && m.m33 === 1 && m.m34 === 0 &&
+    /* m41, m42 and m43 are the translation points */   m.m44 === 1;
+}
+
+/**
+ *  adjoint() -> XCSSMatrix
+ *
+ *  Returns the adjoint matrix.
+ **/
+function adjoint(matrix) {
+    var m = matrix,
+        result = new XCSSMatrix(),
+
+        a1 = m.m11, b1 = m.m12, c1 = m.m13, d1 = m.m14,
+        a2 = m.m21, b2 = m.m22, c2 = m.m23, d2 = m.m24,
+        a3 = m.m31, b3 = m.m32, c3 = m.m33, d3 = m.m34,
+        a4 = m.m41, b4 = m.m42, c4 = m.m43, d4 = m.m44;
+
+    // Row column labeling reversed since we transpose rows & columns
+    result.m11 =  determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4);
+    result.m21 = -determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4);
+    result.m31 =  determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4);
+    result.m41 = -determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
+
+    result.m12 = -determinant3x3(b1, b3, b4, c1, c3, c4, d1, d3, d4);
+    result.m22 =  determinant3x3(a1, a3, a4, c1, c3, c4, d1, d3, d4);
+    result.m32 = -determinant3x3(a1, a3, a4, b1, b3, b4, d1, d3, d4);
+    result.m42 =  determinant3x3(a1, a3, a4, b1, b3, b4, c1, c3, c4);
+
+    result.m13 =  determinant3x3(b1, b2, b4, c1, c2, c4, d1, d2, d4);
+    result.m23 = -determinant3x3(a1, a2, a4, c1, c2, c4, d1, d2, d4);
+    result.m33 =  determinant3x3(a1, a2, a4, b1, b2, b4, d1, d2, d4);
+    result.m43 = -determinant3x3(a1, a2, a4, b1, b2, b4, c1, c2, c4);
+
+    result.m14 = -determinant3x3(b1, b2, b3, c1, c2, c3, d1, d2, d3);
+    result.m24 =  determinant3x3(a1, a2, a3, c1, c2, c3, d1, d2, d3);
+    result.m34 = -determinant3x3(a1, a2, a3, b1, b2, b3, d1, d2, d3);
+    result.m44 =  determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3);
+
+    return result;
+}
+
+/**
+ *  XCSSMatrix.degreesToRadians(angle) -> Number
+ *  - angle (Number): an angle in degrees.
+ *
+ *  Converts angles in degrees, which are used by the external API, to angles
+ *  in radians used in internal calculations.
+ **/
+function degreesToRadians(angle) {
+    return angle * Math.PI / 180;
+}
+
+/* ============ */
+function pluck(obj, key) {
+    return obj[key];
+}
+
+function pluckValues(o) {
+    return pluck(o, 'value');
+}
+
+function cssFunctionToJsFunction(cssFunctionName) {
+    var jsFunctions = {
+        matrix: function (m, o) {
+            var m2 = new XCSSMatrix(o.unparsed);
+
+            return m.multiply(m2);
+        },
+        matrix3d: function (m, o) {
+            var m2 = new XCSSMatrix(o.unparsed);
+
+            return m.multiply(m2);
+        },
+
+        perspective: function (m, o) {
+            var m2 = new XCSSMatrix();
+            m2.m34 -= 1 / o.value[0].value;
+
+            return m.multiply(m2);
+        },
+
+        rotate: function (m, o) {
+            var v = o.value.map(pluckValues);
+            var r = m.rotate.apply(m, v);
+            console.log('v', v, 'r', r);
+            return r;
+        },
+        rotate3d: function (m, o) {
+            return m.rotateAxisAngle.apply(m, o.value.map(pluckValues));
+        },
+        rotateX: function (m, o) {
+            return m.rotate.apply(m, [o.value[0].value, 0, 0]);
+        },
+        rotateY: function (m, o) {
+            return m.rotate.apply(m, [0, o.value[0].value, 0]);
+        },
+        rotateZ: function (m, o) {
+            return m.rotate.apply(m, [0, 0, o.value[0].value]);
+        },
+
+        scale: function (m, o) {
+            return m.scale.apply(m, o.value.map(pluckValues));
+        },
+        scale3d: function (m, o) {
+            return m.scale.apply(m, o.value.map(pluckValues));
+        },
+        scaleX: function (m, o) {
+            return m.scale.apply(m, o.value.map(pluckValues));
+        },
+        scaleY: function (m, o) {
+            return m.scale.apply(m, [0, o.value[0].value, 0]);
+        },
+        scaleZ: function (m, o) {
+            return m.scale.apply(m, [0, 0, o.value[0].value]);
+        },
+
+        skew: function (m, o) {
+            var mX = new XCSSMatrix('skewX(' + o.value[0].unparsed + ')');
+            var mY = new XCSSMatrix('skewY(' + o.value[1].unparsed + ')');
+            var sM = 'matrix(1.00000, '+ mY.b +', '+ mX.c +', 1.000000, 0.000000, 0.000000)';
+            var m2 = new XCSSMatrix(sM);
+
+            return m.multiply(m2);
+        },
+        skewX: function (m, o) {
+            return m.skewX.apply(m, [o.value[0].value]);
+        },
+        skewY: function (m, o) {
+            return m.skewY.apply(m, [o.value[0].value]);
+        },
+
+        translate: function (m, o) {
+            return m.translate.apply(m, o.value.map(pluckValues));
+        },
+        translate3d: function (m, o) {
+            return m.translate.apply(m, o.value.map(pluckValues));
+        },
+        translateX: function (m, o) {
+            return m.translate.apply(m, [o.value[0].value, 0, 0]);
+        },
+        translateY: function (m, o) {
+            return m.translate.apply(m, [0, o.value[0].value, 0]);
+        },
+        translateZ: function (m, o) {
+            return m.translate.apply(m, [0, 0, o.value[0].value]);
+        }
+    };
+
+    return jsFunctions[cssFunctionName];
+}
+
+function parsedToDegrees(parsed) {
+
+    if (parsed.units == 'rad') {
+        parsed.value = parsed.value * (180 / Math.PI);
+        parsed.units = 'deg';
+    }
+    else if (parsed.units == 'grad') {
+        parsed.value = parsed.value / (400 / 360); // 400 gradians in 360 degrees
+        parsed.units = 'deg';
+    }
+
+    return parsed;
+}
+
+function parseTransformValue(value) {
+
+    var units = /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/;
+    var parts = value.match(units) || [];
+
+    return {
+        value: parseFloat(parts[1]),
+        units: parts[2],
+        unparsed: value
+    };
+}
+
+function parseTransformStatement(statement) {
+
+    var nameAndArgs = /(\w+)\(([^\)]+)\)/i;
+    var pair        = statement.match(nameAndArgs).slice(1);
+    console.log(pair, pair[0], pair[1].split(/, ?/).map(parseTransformValue));
+    return {
+        key: pair[0],
+        value: pair[1].split(/, ?/).map(parseTransformValue),
+        unparsed: statement
+    };
+}
+
+function transformMatrix(matrix, operation) {
+    console.log('transform', matrix.toString(), 'with', operation);
+    // convert to degrees because all CSSMatrix methods expect degrees
+    operation.value = operation.value.map(parsedToDegrees);
+
+    var jsFunction = cssFunctionToJsFunction(operation.key);
+    var result     = jsFunction(matrix, operation);
+
+    return result || matrix;
+}
+
+/**
+ * @private
+ * XCSSMatrix.toMatrixString(transformString) -> String
+ * - transformString (String): `el.style.WebkitTransform`-style string (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
+ *
+ * Tranforms a `el.style.WebkitTransform`-style string
+ * (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
+ * into a `getComputedStyle(el)`-style matrix string
+ * (like `matrix3d(0.6603167082440828, -0.7509872467716737, 0, 0, 0.7509872467716737, 0.6603167082440828, 0, 0, 0, 0, 1, 0, 108.11456008937151, 28.482308485824596, 10, 1)`)
+ **/
+function toMatrixString(transformString) {
+
+    var functionSignature   = /(\w+)\([^\)]+\)/ig;
+    var transformStatements = transformString.match(functionSignature);
+    var statementIsMatrix   = function (t) { return (/^matrix/).test(t); };
+    var onlyMatrices        = transformStatements && transformStatements.every(statementIsMatrix);
+    console.log(transformStatements, onlyMatrices);
+    if (!transformStatements || onlyMatrices) return transformString;
+
+    var transformOperations = transformStatements.map(parseTransformStatement);
+    var startingMatrix      = new XCSSMatrix();
+    var transformedMatrix   = transformOperations.reduce(transformMatrix, startingMatrix);
+    var matrixString        = transformedMatrix.toString();
+
+    return matrixString;
+}
+
+/*!
+ * expose.js
+ *
+ * @author Oleg Slobodskoi
+ * @website https://github.com/kof/expose.js
+ * @licence Dual licensed under the MIT or GPL Version 2 licenses.
+ */
+function expose(namespace, api) {
+    var env = {};
+
+    if (typeof namespace !== 'string') {
+        api = namespace;
+        namespace = null;
+    }
+
+    // the global api of any environment
+    // thanks to Nicholas C. Zakas
+    // http://www.nczonline.net/blog/2008/04/20/get-the-javascript-global/
+    env.global = (function(){
+        return this;
+    }).call(null);
+
+    // expose passed api as exports
+    env.exports = api || {};
+
+    // commonjs
+    if (typeof module !== 'undefined' &&
+        typeof exports !== 'undefined' &&
+        module.exports) {
+        env.commonjs = true;
+        env.module = module;
+        module.exports = exports = env.exports;
+    }
+
+    // browser only
+    if (typeof window !== 'undefined') {
+        env.browser = true;
+        // we are not in amd wrapper
+        if (!env.commonjs && namespace && env.exports) {
+            env.global[namespace] = env.exports;
+        }
+    }
+
+    return env;
+}
+})();
