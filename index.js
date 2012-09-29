@@ -1,7 +1,5 @@
 (function () {
 /**
- *  class XCSSMatrix
- *
  *  The [[XCSSMatrix]] class is intended to be a spec-compliant implementation
  *  of the `CSSMatrix` interface defined in the [CSS 2D Transforms][2d] and
  *  [CSS 3D Transforms][3d] Module specifications.
@@ -18,123 +16,33 @@
  * (and/or tests) for any failing cases.
  * [2dtests]: [http://src.chromium.org/svn/branches/WebKit/472/LayoutTests/transforms/cssmatrix-2d-interface.xhtml]
  * [3dtests]: [http://src.chromium.org/svn/branches/WebKit/472/LayoutTests/transforms/cssmatrix-3d-interface.xhtml]
- **/
-
-/**
- *  XCSSMatrix#a -> Number
- *  The first 2D vector value.
- **/
-
-/**
- *  XCSSMatrix#b -> Number
- *  The second 2D vector value.
- **/
-
-/**
- *  XCSSMatrix#c -> Number
- *  The third 2D vector value.
- **/
-
-/**
- *  XCSSMatrix#d -> Number
- *  The fourth 2D vector value.
- **/
-
-/**
- *  XCSSMatrix#e -> Number
- *  The fifth 2D vector value.
- **/
-
-/**
- *  XCSSMatrix#f -> Number
- *  The sixth 2D vector value.
- **/
-
-/**
- *  XCSSMatrix#m11 -> Number
- *  The 3D matrix value in the first row and first column.
- **/
-
-/**
- *  XCSSMatrix#m12 -> Number
- *  The 3D matrix value in the first row and second column.
- **/
-
-/**
- *  XCSSMatrix#m13 -> Number
- *  The 3D matrix value in the first row and third column.
- **/
-
-/**
- *  XCSSMatrix#m14 -> Number
- *  The 3D matrix value in the first row and fourth column.
- **/
-
-/**
- *  XCSSMatrix#m21 -> Number
- *  The 3D matrix value in the second row and first column.
- **/
-
-/**
- *  XCSSMatrix#m22 -> Number
- *  The 3D matrix value in the second row and second column.
- **/
-
-/**
- *  XCSSMatrix#m23 -> Number
- *  The 3D matrix value in the second row and third column.
- **/
-
-/**
- *  XCSSMatrix#m24 -> Number
- *  The 3D matrix value in the second row and fourth column.
- **/
-
-/**
- *  XCSSMatrix#m31 -> Number
- *  The 3D matrix value in the third row and first column.
- **/
-
-/**
- *  XCSSMatrix#m32 -> Number
- *  The 3D matrix value in the third row and second column.
- **/
-
-/**
- *  XCSSMatrix#m33 -> Number
- *  The 3D matrix value in the third row and third column.
- **/
-
-/**
- *  XCSSMatrix#m34 -> Number
- *  The 3D matrix value in the third row and fourth column.
- **/
-
-/**
- *  XCSSMatrix#m41 -> Number
- *  The 3D matrix value in the fourth row and first column.
- **/
-
-/**
- *  XCSSMatrix#m42 -> Number
- *  The 3D matrix value in the fourth row and second column.
- **/
-
-/**
- *  XCSSMatrix#m43 -> Number
- *  The 3D matrix value in the fourth row and third column.
- **/
-
-/**
- *  XCSSMatrix#m44 -> Number
- *  The 3D matrix value in the fourth row and fourth column.
- **/
-
-/**
- *  new XCSSMatrix(domstr)
- *  - domstr (String): a string representation of a 2D or 3D transform matrix
+ *  @constructor XCSSMatrix
+ *  @param {string} domstr - a string representation of a 2D or 3D transform matrix
  *    in the form given by the CSS transform property, i.e. just like the
- *    output from [[XCSSMatrix#toString]].
+ *    output from [[@link#toString]].
+ *  @property {number} a - The first 2D vector value.
+ *  @property {number} b - The second 2D vector value.
+ *  @property {number} c - The third 2D vector value.
+ *  @property {number} d - The fourth 2D vector value.
+ *  @property {number} e - The fifth 2D vector value.
+ *  @property {number} f - The sixth 2D vector value.
+ *  @property {number} m11 - The 3D matrix value in the first row and first column.
+ *  @property {number} m12 - The 3D matrix value in the first row and second column.
+ *  @property {number} m13 - The 3D matrix value in the first row and third column.
+ *  @property {number} m14 - The 3D matrix value in the first row and fourth column.
+ *  @property {number} m21 - The 3D matrix value in the second row and first column.
+ *  @property {number} m22 - The 3D matrix value in the second row and second column.
+ *  @property {number} m23 - The 3D matrix value in the second row and third column.
+ *  @property {number} m24 - The 3D matrix value in the second row and fourth column.
+ *  @property {number} m31 - The 3D matrix value in the third row and first column.
+ *  @property {number} m32 - The 3D matrix value in the third row and second column.
+ *  @property {number} m33 - The 3D matrix value in the third row and third column.
+ *  @property {number} m34 - The 3D matrix value in the third row and fourth column.
+ *  @property {number} m41 - The 3D matrix value in the fourth row and first column.
+ *  @property {number} m42 - The 3D matrix value in the fourth row and second column.
+ *  @property {number} m43 - The 3D matrix value in the fourth row and third column.
+ *  @property {number} m44 - The 3D matrix value in the fourth row and fourth column.
+ *  @returns {XCSSMatrix} matrix
  **/
 function XCSSMatrix(domstr) {
     this.m11 = this.m22 = this.m33 = this.m44 = 1;
@@ -177,10 +85,10 @@ XCSSMatrix.displayName = "XCSSMatrix";
 
 
 /**
- *  XCSSMatrix#multiply(otherMatrix) -> XCSSMatrix
- *  - otherMatrix (XCSSMatrix): the matrix to multiply this one by.
- *
- *  Multiplies the matrix by a given matrix and returns the result.
+ *  Multiply one matrix by another
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @param {XCSSMatrix} otherMatrix - The matrix to multiply this one by.
  **/
 XCSSMatrix.prototype.multiply = function (otherMatrix) {
     if (!otherMatrix) return null;
@@ -213,9 +121,10 @@ XCSSMatrix.prototype.multiply = function (otherMatrix) {
 };
 
 /**
- *  XCSSMatrix#inverse() -> XCSSMatrix | null
- *
  *  If the matrix is invertible, returns its inverse, otherwise returns null.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @returns {XCSSMatrix|null}
  **/
 XCSSMatrix.prototype.inverse = function () {
     var inv, det, result, i, j;
@@ -252,17 +161,16 @@ XCSSMatrix.prototype.inverse = function () {
 };
 
 /**
- *  XCSSMatrix#rotate(rotX, rotY, rotZ) -> XCSSMatrix
- *  - rotX (Number): the rotation around the x axis.
- *  - rotY (Number): the rotation around the y axis. If undefined, the x
- *    component is used.
- *  - rotZ (Number): the rotation around the z axis. If undefined, the x
- *    component is used.
- *
  *  Returns the result of rotating the matrix by a given vector.
  *
  *  If only the first argument is provided, the matrix is only rotated about
  *  the z axis.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @param {number} rotX - The rotation around the x axis.
+ *  @param {number} rotY - The rotation around the y axis. If undefined, the x component is used.
+ *  @param {number} rotZ - The rotation around the z axis. If undefined, the x component is used.
+ *  @returns XCSSMatrix
  **/
 XCSSMatrix.prototype.rotate = function (rx, ry, rz) {
 
@@ -323,19 +231,18 @@ XCSSMatrix.prototype.rotate = function (rx, ry, rz) {
 };
 
 /**
- *  XCSSMatrix#rotateAxisAngle(rotX, rotY, rotZ, angle) -> XCSSMatrix
- *  - rotX (Number): the rotation around the x axis.
- *  - rotY (Number): the rotation around the y axis. If undefined, the x
- *    component is used.
- *  - rotZ (Number): the rotation around the z axis. If undefined, the x
- *    component is used.
- *  - angle (Number): the angle of rotation about the axis vector, in degrees.
- *
  *  Returns the result of rotating the matrix around a given vector by a given
  *  angle.
  *
  *  If the given vector is the origin vector then the matrix is rotated by the
  *  given angle around the z axis.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @param {number} rotX - The rotation around the x axis.
+ *  @param {number} rotY - The rotation around the y axis. If undefined, the x component is used.
+ *  @param {number} rotZ - The rotation around the z axis. If undefined, the x component is used.
+ *  @param {number} angle - The angle of rotation about the axis vector, in degrees.
+ *  @returns XCSSMatrix
  **/
 XCSSMatrix.prototype.rotateAxisAngle = function (x, y, z, a) {
     if (typeof x != "number" || isNaN(x)) x = 0;
@@ -398,14 +305,13 @@ XCSSMatrix.prototype.rotateAxisAngle = function (x, y, z, a) {
 };
 
 /**
- *  XCSSMatrix#scale(scaleX, scaleY, scaleZ) -> XCSSMatrix
- *  - scaleX (Number): the scaling factor in the x axis.
- *  - scaleY (Number): the scaling factor in the y axis. If undefined, the x
- *    component is used.
- *  - scaleZ (Number): the scaling factor in the z axis. If undefined, 1 is
- *    used.
- *
  *  Returns the result of scaling the matrix by a given vector.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @param {number} scaleX - the scaling factor in the x axis.
+ *  @param {number} scaleY - the scaling factor in the y axis. If undefined, the x component is used.
+ *  @param {number} scaleZ - the scaling factor in the z axis. If undefined, 1 is used.
+ *  @returns XCSSMatrix
  **/
 XCSSMatrix.prototype.scale = function (scaleX, scaleY, scaleZ) {
     var transform = new XCSSMatrix();
@@ -422,10 +328,11 @@ XCSSMatrix.prototype.scale = function (scaleX, scaleY, scaleZ) {
 };
 
 /**
- *  XCSSMatrix#skewX(skewX) -> XCSSMatrix
- *  - skewX (Number): the scaling factor in the x axis.
- *
  *  Returns the result of skewing the matrix by a given vector.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @param {number} skewX - The scaling factor in the x axis.
+ *  @returns XCSSMatrix
  **/
 XCSSMatrix.prototype.skewX = function (degrees) {
     var radians   = degreesToRadians(degrees);
@@ -437,10 +344,11 @@ XCSSMatrix.prototype.skewX = function (degrees) {
 };
 
 /**
- *  XCSSMatrix#skewY(skewY) -> XCSSMatrix
- *  - skewY (Number): the scaling factor in the x axis.
- *
  *  Returns the result of skewing the matrix by a given vector.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @param {number} skewY - the scaling factor in the x axis.
+ *  @returns XCSSMatrix
  **/
 XCSSMatrix.prototype.skewY = function (degrees) {
     var radians   = degreesToRadians(degrees);
@@ -452,12 +360,13 @@ XCSSMatrix.prototype.skewY = function (degrees) {
 };
 
 /**
- *  XCSSMatrix#translate(x, y, z) -> XCSSMatrix
- *  - x (Number): the x component of the vector.
- *  - y (Number): the y component of the vector.
- *  - z (Number): the z component of the vector. If undefined, 0 is used.
- *
  *  Returns the result of translating the matrix by a given vector.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @param {number} x - The x component of the vector.
+ *  @param {number} y - The y component of the vector.
+ *  @param {number} z - The z component of the vector. If undefined, 0 is used.
+ *  @returns XCSSMatrix
  **/
 XCSSMatrix.prototype.translate = function (x, y, z) {
     var t = new XCSSMatrix();
@@ -474,14 +383,14 @@ XCSSMatrix.prototype.translate = function (x, y, z) {
 };
 
 /**
- * @private
- *  setMatrixValue(domstr) -> undefined
- *  - domstr (String): a string representation of a 2D or 3D transform matrix
- *    in the form given by the CSS transform property, i.e. just like the
- *    output from [[XCSSMatrix#toString]].
- *
  *  Sets the matrix values using a string representation, such as that produced
  *  by the [[XCSSMatrix#toString]] method.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @params {string} domstr - A string representation of a 2D or 3D transform matrix
+ *    in the form given by the CSS transform property, i.e. just like the
+ *    output from [[XCSSMatrix#toString]].
+ *  @returns undefined
  **/
 XCSSMatrix.prototype.setMatrixValue = function (domstr) {
 
@@ -514,9 +423,11 @@ XCSSMatrix.prototype.setMatrixValue = function (domstr) {
 };
 
 /**
- *  XCSSMatrix#toString() -> String
- *
  *  Returns a string representation of the matrix.
+ *  @method
+ *  @memberof XCSSMatrix
+ *  @returns {string} matrixString - a string like `matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)`
+ *
  **/
 XCSSMatrix.prototype.toString = function () {
     var points, prefix;
@@ -672,9 +583,9 @@ function degreesToRadians(angle) {
     return angle * Math.PI / 180;
 }
 
-/* ============ */
 function pluck(obj, key) {
     return obj[key];
+/* ====== toMatrixString ====== */
 }
 
 function pluckValues(o) {
@@ -702,10 +613,7 @@ function cssFunctionToJsFunction(cssFunctionName) {
         },
 
         rotate: function (m, o) {
-            var v = o.value.map(pluckValues);
-            var r = m.rotate.apply(m, v);
-            console.log('v', v, 'r', r);
-            return r;
+            return m.rotate.apply(m, o.value.map(pluckValues));
         },
         rotate3d: function (m, o) {
             return m.rotateAxisAngle.apply(m, o.value.map(pluckValues));
@@ -774,11 +682,11 @@ function cssFunctionToJsFunction(cssFunctionName) {
 function parsedToDegrees(parsed) {
 
     if (parsed.units == 'rad') {
-        parsed.value = parsed.value * (180 / Math.PI);
+	parsed.value = parsed.value * (180 / Math.PI);
         parsed.units = 'deg';
     }
     else if (parsed.units == 'grad') {
-        parsed.value = parsed.value / (400 / 360); // 400 gradians in 360 degrees
+	parsed.value = parsed.value / (400 / 360); // 400 gradians in 360 degrees
         parsed.units = 'deg';
     }
 
@@ -799,12 +707,15 @@ function parseTransformValue(value) {
 
 function parseTransformStatement(statement) {
 
-    var nameAndArgs = /(\w+)\(([^\)]+)\)/i;
-    var pair        = statement.match(nameAndArgs).slice(1);
-    console.log(pair, pair[0], pair[1].split(/, ?/).map(parseTransformValue));
+    var nameAndArgs     = /(\w+)\(([^\)]+)\)/i;
+    var statementParts  = statement.match(nameAndArgs).slice(1);
+    var functionName    = statementParts[0];
+    var transformValues = statementParts[1].split(/, ?/);
+    var parsedValues    = transformValues.map(parseTransformValue);
+
     return {
-        key: pair[0],
-        value: pair[1].split(/, ?/).map(parseTransformValue),
+        key: functionName,
+        value: parsedValues,
         unparsed: statement
     };
 }
@@ -821,14 +732,13 @@ function transformMatrix(matrix, operation) {
 }
 
 /**
- * @private
- * XCSSMatrix.toMatrixString(transformString) -> String
- * - transformString (String): `el.style.WebkitTransform`-style string (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
- *
- * Tranforms a `el.style.WebkitTransform`-style string
- * (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
- * into a `getComputedStyle(el)`-style matrix string
- * (like `matrix3d(0.6603167082440828, -0.7509872467716737, 0, 0, 0.7509872467716737, 0.6603167082440828, 0, 0, 0, 0, 1, 0, 108.11456008937151, 28.482308485824596, 10, 1)`)
+ *  Tranforms a `el.style.WebkitTransform`-style string
+ *  (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
+ *  into a `getComputedStyle(el)`-style matrix string
+ *  (like `matrix3d(0.6603167082440828, -0.7509872467716737, 0, 0, 0.7509872467716737, 0.6603167082440828, 0, 0, 0, 0, 1, 0, 108.11456008937151, 28.482308485824596, 10, 1)`)
+ *  @private
+ *  @method
+ *  @param {string} transformString - `el.style.WebkitTransform`-style string (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
  **/
 function toMatrixString(transformString) {
 
@@ -836,7 +746,7 @@ function toMatrixString(transformString) {
     var transformStatements = transformString.match(functionSignature);
     var statementIsMatrix   = function (t) { return (/^matrix/).test(t); };
     var onlyMatrices        = transformStatements && transformStatements.every(statementIsMatrix);
-    console.log(transformStatements, onlyMatrices);
+
     if (!transformStatements || onlyMatrices) return transformString;
 
     var transformOperations = transformStatements.map(parseTransformStatement);
