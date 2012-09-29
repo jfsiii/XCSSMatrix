@@ -186,9 +186,9 @@ XCSSMatrix.prototype.rotate = function (rx, ry, rz) {
     if (typeof ry != "number" || isNaN(ry)) ry = 0;
     if (typeof rz != "number" || isNaN(rz)) rz = 0;
 
-    rx = degreesToRadians(rx);
-    ry = degreesToRadians(ry);
-    rz = degreesToRadians(rz);
+    rx = deg2rad(rx);
+    ry = deg2rad(ry);
+    rz = deg2rad(rz);
 
     var tx = new XCSSMatrix(),
         ty = new XCSSMatrix(),
@@ -255,7 +255,7 @@ XCSSMatrix.prototype.rotateAxisAngle = function (x, y, z, a) {
         len = Math.sqrt(x * x + y * y + z * z),
         cosA, sinA, sinA2, csA, x2, y2, z2;
 
-    a     = (degreesToRadians(a) || 0) / 2;
+    a     = (deg2rad(a) || 0) / 2;
     cosA  = Math.cos(a);
     sinA  = Math.sin(a);
     sinA2 = sinA * sinA;
@@ -335,7 +335,7 @@ XCSSMatrix.prototype.scale = function (scaleX, scaleY, scaleZ) {
  *  @returns XCSSMatrix
  **/
 XCSSMatrix.prototype.skewX = function (degrees) {
-    var radians   = degreesToRadians(degrees);
+    var radians   = deg2rad(degrees);
     var transform = new XCSSMatrix();
 
     transform.c = Math.tan(radians);
@@ -351,7 +351,7 @@ XCSSMatrix.prototype.skewX = function (degrees) {
  *  @returns XCSSMatrix
  **/
 XCSSMatrix.prototype.skewY = function (degrees) {
-    var radians   = degreesToRadians(degrees);
+    var radians   = deg2rad(degrees);
     var transform = new XCSSMatrix();
 
     transform.b = Math.tan(radians);
@@ -573,23 +573,28 @@ function adjoint(matrix) {
 }
 
 /**
- *  XCSSMatrix.degreesToRadians(angle) -> Number
+ *  XCSSMatrix.deg2rad(angle) -> Number
  *  - angle (Number): an angle in degrees.
  *
  *  Converts angles in degrees, which are used by the external API, to angles
  *  in radians used in internal calculations.
  **/
-function degreesToRadians(angle) {
+function deg2rad(angle) {
     return angle * Math.PI / 180;
 }
 
-function pluck(obj, key) {
-    return obj[key];
 /* ====== toMatrixString ====== */
+function rad2deg(radians) {
+    return radians * (180 / Math.PI);
 }
 
-function pluckValues(o) {
-    return pluck(o, 'value');
+function grad2deg(gradians) {
+    // 400 gradians in 360 degrees
+    return gradians / (400 / 360);
+}
+
+function pluckValues(obj) {
+    return obj.value;
 }
 
 function cssFunctionToJsFunction(cssFunctionName) {
@@ -682,11 +687,11 @@ function cssFunctionToJsFunction(cssFunctionName) {
 function parsedToDegrees(parsed) {
 
     if (parsed.units == 'rad') {
-	parsed.value = parsed.value * (180 / Math.PI);
+        parsed.value = rad2deg(parsed.value);
         parsed.units = 'deg';
     }
     else if (parsed.units == 'grad') {
-	parsed.value = parsed.value / (400 / 360); // 400 gradians in 360 degrees
+        parsed.value = grad2deg(parsed.value);
         parsed.units = 'deg';
     }
 
