@@ -726,7 +726,6 @@ function parseTransformStatement(statement) {
 }
 
 function transformMatrix(matrix, operation) {
-    console.log('transform', matrix.toString(), 'with', operation);
     // convert to degrees because all CSSMatrix methods expect degrees
     operation.value = operation.value.map(parsedToDegrees);
 
