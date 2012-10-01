@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>angleUtils | API Docs</title>
+        <link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" /><link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.css" />
+        <style>
+          .doc p {line-height: 21px; font-size: 16px}
+          h2 .icon { margin-top: 7px !important;}
+          h3 .icon { margin-top: 4px !important;}
+          li {line-height: 21px;}
+          .navbar .container { width: 940px; }
+          .sidenav i {
+            float: right;
+            margin-top: 2px;
+            margin-right: -6px;
+          }
+          .sidenav > li.nav-header {
+            background-color: #eee;
+          }
+          .sidenav > li.nav-header,
+          .sidenav > li > a {
+            display: block;
+            margin: 0 0 -1px;
+            padding: 8px 14px;
+            border: 1px solid #e5e5e5;
+          }
+          .sidenav > li.nav-header:first-child,
+          .sidenav > li:first-child > a {
+            -webkit-border-radius: 6px 6px 0 0;
+            -moz-border-radius: 6px 6px 0 0;
+            border-radius: 6px 6px 0 0;
+          }
+          .sidenav > li:last-child > a {
+            -webkit-border-radius: 0 0 6px 6px;
+            -moz-border-radius: 0 0 6px 6px;
+            border-radius: 0 0 6px 6px;
+          }
+
+        </style>
+    </head>
+    <body>
+      <div class="navbar">
+        <div class="navbar-inner">
+          <div class="container">
+            <a class="brand" href="index.html">API Docs</a>
+            <ul class="nav">
+              <li><a href="XCSSMatrix.html">XCSSMatrix</a></li><li class="active"><a href="angleUtils.html">angleUtils</a></li><li><a href="cssTransformStringUtils.html">cssTransformStringUtils</a></li><li><a href="matrixUtils.html">matrixUtils</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <div class="row">
+          <div class="span3">
+            <ul class="nav nav-list sidenav"><li class="nav-header">angleUtils - exports</li><li><a href="#helper/deg2rad"><i class="icon icon-eye-close"></i> deg2rad</a></li><li><a href="#helper/rad2deg"><i class="icon icon-eye-close"></i> rad2deg</a></li><li><a href="#helper/grad2deg"><i class="icon icon-eye-close"></i> grad2deg</a></li></ul>
+            &nbsp;
+          </div>
+          <div class="span9">
+            <a name="helper"></a><div class="page-header"><h2>angleUtils - exports</h2></div><ul class="nav nav-pills"><li><a href="#helper/deg2rad">deg2rad</a></li><li><a href="#helper/rad2deg">rad2deg</a></li><li><a href="#helper/grad2deg">grad2deg</a></li></ul><div class="method"><a name="helper/deg2rad"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>deg2rad</h2><blockquote>Declared as <code>function deg2rad(angle) </code></blockquote><div class="doc"><p>Converts angles in degrees, which are used by the external API, to angles<br /> in radians used in internal calculations.<br /> @param <strong>number</strong> angle - An angle in degrees.<br /> @returns <strong>number</strong> radians</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:7" style="display: none; margin-top: 15px;"><code>function deg2rad(angle) {
+    return angle * Math.PI / 180;
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/rad2deg"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>rad2deg</h2><blockquote>Declared as <code>function rad2deg(radians) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:11" style="display: none; margin-top: 15px;"><code>function rad2deg(radians) {
+    return radians * (180 / Math.PI);
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/grad2deg"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>grad2deg</h2><blockquote>Declared as <code>function grad2deg(gradians) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:15" style="display: none; margin-top: 15px;"><code>function grad2deg(gradians) {
+    // 400 gradians in 360 degrees
+    return gradians / (400 / 360);
+}
+</code></pre></div><hr/></div>
+          </div>
+        </div>
+    </body>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script><script src="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.js"></script><script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-dropdown.js"></script>
+    <script>
+      window.prettyPrint && prettyPrint()
+    </script>
+</html>

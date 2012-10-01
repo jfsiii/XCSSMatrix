@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>cssTransformStringUtils | API Docs</title>
+        <link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" /><link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.css" />
+        <style>
+          .doc p {line-height: 21px; font-size: 16px}
+          h2 .icon { margin-top: 7px !important;}
+          h3 .icon { margin-top: 4px !important;}
+          li {line-height: 21px;}
+          .navbar .container { width: 940px; }
+          .sidenav i {
+            float: right;
+            margin-top: 2px;
+            margin-right: -6px;
+          }
+          .sidenav > li.nav-header {
+            background-color: #eee;
+          }
+          .sidenav > li.nav-header,
+          .sidenav > li > a {
+            display: block;
+            margin: 0 0 -1px;
+            padding: 8px 14px;
+            border: 1px solid #e5e5e5;
+          }
+          .sidenav > li.nav-header:first-child,
+          .sidenav > li:first-child > a {
+            -webkit-border-radius: 6px 6px 0 0;
+            -moz-border-radius: 6px 6px 0 0;
+            border-radius: 6px 6px 0 0;
+          }
+          .sidenav > li:last-child > a {
+            -webkit-border-radius: 0 0 6px 6px;
+            -moz-border-radius: 0 0 6px 6px;
+            border-radius: 0 0 6px 6px;
+          }
+
+        </style>
+    </head>
+    <body>
+      <div class="navbar">
+        <div class="navbar-inner">
+          <div class="container">
+            <a class="brand" href="index.html">API Docs</a>
+            <ul class="nav">
+              <li><a href="XCSSMatrix.html">XCSSMatrix</a></li><li><a href="angleUtils.html">angleUtils</a></li><li class="active"><a href="cssTransformStringUtils.html">cssTransformStringUtils</a></li><li><a href="matrixUtils.html">matrixUtils</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <div class="row">
+          <div class="span3">
+            <ul class="nav nav-list sidenav"><li class="nav-header">cssTransformStringUtils - exports</li><li><a href="#helper/valueToObject"><i class="icon icon-eye-close"></i> valueToObject</a></li><li><a href="#helper/statementToObject"><i class="icon icon-eye-close"></i> statementToObject</a></li><li><a href="#helper/stringToStatements"><i class="icon icon-eye-close"></i> stringToStatements</a></li></ul>
+            &nbsp;
+          </div>
+          <div class="span9">
+            <a name="helper"></a><div class="page-header"><h2>cssTransformStringUtils - exports</h2></div><ul class="nav nav-pills"><li><a href="#helper/valueToObject">valueToObject</a></li><li><a href="#helper/statementToObject">statementToObject</a></li><li><a href="#helper/stringToStatements">stringToStatements</a></li></ul><div class="method"><a name="helper/valueToObject"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>valueToObject</h2><blockquote>Declared as <code>function valueToObject(value) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:5" style="display: none; margin-top: 15px;"><code>function valueToObject(value) {
+    var units = /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/;
+    var parts = value.match(units) || [];
+
+    return {
+        value: parseFloat(parts[1]),
+        units: parts[2],
+        unparsed: value
+    };
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/statementToObject"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>statementToObject</h2><blockquote>Declared as <code>function statementToObject(statement, skipValues) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:16" style="display: none; margin-top: 15px;"><code>function statementToObject(statement, skipValues) {
+
+    var nameAndArgs    = /(\w+)\(([^\)]+)\)/i;
+    var statementParts = statement.toString().match(nameAndArgs).slice(1);
+    var functionName   = statementParts[0];
+    var stringValues   = statementParts[1].split(/, ?/);
+    var parsedValues   = !skipValues && stringValues.map(valueToObject);
+
+    return {
+        key: functionName,
+        value: parsedValues || stringValues,
+        unparsed: statement
+    };
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/stringToStatements"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>stringToStatements</h2><blockquote>Declared as <code>function stringToStatements(transformString) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:31" style="display: none; margin-top: 15px;"><code>function stringToStatements(transformString) {
+    var functionSignature   = /(\w+)\([^\)]+\)/ig;
+    var transformStatements = transformString.match(functionSignature) || [];
+
+    return transformStatements;
+}
+</code></pre></div><hr/></div>
+          </div>
+        </div>
+    </body>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script><script src="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.js"></script><script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-dropdown.js"></script>
+    <script>
+      window.prettyPrint && prettyPrint()
+    </script>
+</html>

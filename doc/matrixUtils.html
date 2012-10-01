@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>matrixUtils | API Docs</title>
+        <link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css" /><link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.css" />
+        <style>
+          .doc p {line-height: 21px; font-size: 16px}
+          h2 .icon { margin-top: 7px !important;}
+          h3 .icon { margin-top: 4px !important;}
+          li {line-height: 21px;}
+          .navbar .container { width: 940px; }
+          .sidenav i {
+            float: right;
+            margin-top: 2px;
+            margin-right: -6px;
+          }
+          .sidenav > li.nav-header {
+            background-color: #eee;
+          }
+          .sidenav > li.nav-header,
+          .sidenav > li > a {
+            display: block;
+            margin: 0 0 -1px;
+            padding: 8px 14px;
+            border: 1px solid #e5e5e5;
+          }
+          .sidenav > li.nav-header:first-child,
+          .sidenav > li:first-child > a {
+            -webkit-border-radius: 6px 6px 0 0;
+            -moz-border-radius: 6px 6px 0 0;
+            border-radius: 6px 6px 0 0;
+          }
+          .sidenav > li:last-child > a {
+            -webkit-border-radius: 0 0 6px 6px;
+            -moz-border-radius: 0 0 6px 6px;
+            border-radius: 0 0 6px 6px;
+          }
+
+        </style>
+    </head>
+    <body>
+      <div class="navbar">
+        <div class="navbar-inner">
+          <div class="container">
+            <a class="brand" href="index.html">API Docs</a>
+            <ul class="nav">
+              <li><a href="XCSSMatrix.html">XCSSMatrix</a></li><li><a href="angleUtils.html">angleUtils</a></li><li><a href="cssTransformStringUtils.html">cssTransformStringUtils</a></li><li class="active"><a href="matrixUtils.html">matrixUtils</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <div class="row">
+          <div class="span3">
+            <ul class="nav nav-list sidenav"><li class="nav-header">matrixUtils - exports</li><li><a href="#helper/determinant2x2"><i class="icon icon-eye-close"></i> determinant2x2</a></li><li><a href="#helper/determinant3x3"><i class="icon icon-eye-close"></i> determinant3x3</a></li><li><a href="#helper/determinant4x4"><i class="icon icon-eye-close"></i> determinant4x4</a></li><li><a href="#helper/isAffine"><i class="icon icon-eye-close"></i> isAffine</a></li><li><a href="#helper/isIdentityOrTranslation"><i class="icon icon-eye-close"></i> isIdentityOrTranslation</a></li><li><a href="#helper/adjoint"><i class="icon icon-eye-close"></i> adjoint</a></li></ul>
+            &nbsp;
+          </div>
+          <div class="span9">
+            <a name="helper"></a><div class="page-header"><h2>matrixUtils - exports</h2></div><ul class="nav nav-pills"><li><a href="#helper/determinant2x2">determinant2x2</a></li><li><a href="#helper/determinant3x3">determinant3x3</a></li><li><a href="#helper/determinant4x4">determinant4x4</a></li><li><a href="#helper/isAffine">isAffine</a></li><li><a href="#helper/isIdentityOrTranslation">isIdentityOrTranslation</a></li><li><a href="#helper/adjoint">adjoint</a></li></ul><div class="method"><a name="helper/determinant2x2"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>determinant2x2</h2><blockquote>Declared as <code>function determinant2x2(a, b, c, d) </code></blockquote><div class="doc"><p>Calculates the determinant of a 2x2 matrix.<br /> @param <strong>number</strong> a - Top-left value of the matrix.<br /> @param <strong>number</strong> b - Top-right value of the matrix.<br /> @param <strong>number</strong> c - Bottom-left value of the matrix.<br /> @param <strong>number</strong> d - Bottom-right value of the matrix.<br /> @returns <strong>number</strong></p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:9" style="display: none; margin-top: 15px;"><code>function determinant2x2(a, b, c, d) {
+    return a * d - b * c;
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/determinant3x3"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>determinant3x3</h2><blockquote>Declared as <code>function determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) </code></blockquote><div class="doc"><p>Calculates the determinant of a 3x3 matrix.<br /> @param <strong>number</strong> a1 - Matrix value in position [1, 1].<br /> @param <strong>number</strong> a2 - Matrix value in position [1, 2].<br /> @param <strong>number</strong> a3 - Matrix value in position [1, 3].<br /> @param <strong>number</strong> b1 - Matrix value in position [2, 1].<br /> @param <strong>number</strong> b2 - Matrix value in position [2, 2].<br /> @param <strong>number</strong> b3 - Matrix value in position [2, 3].<br /> @param <strong>number</strong> c1 - Matrix value in position [3, 1].<br /> @param <strong>number</strong> c2 - Matrix value in position [3, 2].<br /> @param <strong>number</strong> c3 - Matrix value in position [3, 3].<br /> @returns <strong>number</strong></p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:26" style="display: none; margin-top: 15px;"><code>function determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) {
+
+    return a1 * determinant2x2(b2, b3, c2, c3) -
+           b1 * determinant2x2(a2, a3, c2, c3) +
+           c1 * determinant2x2(a2, a3, b2, b3);
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/determinant4x4"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>determinant4x4</h2><blockquote>Declared as <code>function determinant4x4(matrix) </code></blockquote><div class="doc"><p>Calculates the determinant of a 4x4 matrix.<br /> @param <strong>XCSSMatrix</strong> matrix - The matrix to calculate the determinant of.<br /> @returns <strong>number</strong></p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:38" style="display: none; margin-top: 15px;"><code>function determinant4x4(matrix) {
+    var
+        m = matrix,
+        // Assign to individual variable names to aid selecting correct elements
+        a1 = m.m11, b1 = m.m21, c1 = m.m31, d1 = m.m41,
+        a2 = m.m12, b2 = m.m22, c2 = m.m32, d2 = m.m42,
+        a3 = m.m13, b3 = m.m23, c3 = m.m33, d3 = m.m43,
+        a4 = m.m14, b4 = m.m24, c4 = m.m34, d4 = m.m44;
+
+    return a1 * determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4) -
+           b1 * determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4) +
+           c1 * determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4) -
+           d1 * determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/isAffine"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>isAffine</h2><blockquote>Declared as <code>function isAffine(matrix) </code></blockquote><div class="doc"><p>Determines whether the matrix is affine.<br /> @returns <strong>boolean</strong></p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:57" style="display: none; margin-top: 15px;"><code>function isAffine(matrix) {
+    return matrix.m13 === 0 && matrix.m14 === 0 &&
+           matrix.m23 === 0 && matrix.m24 === 0 &&
+           matrix.m31 === 0 && matrix.m32 === 0 &&
+           matrix.m33 === 1 && matrix.m34 === 0 &&
+           matrix.m43 === 0 && matrix.m44 === 1;
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/isIdentityOrTranslation"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>isIdentityOrTranslation</h2><blockquote>Declared as <code>function isIdentityOrTranslation(matrix) </code></blockquote><div class="doc"><p>Returns whether the matrix is the identity matrix or a translation matrix.<br /> @return <strong>boolean</strong></p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:69" style="display: none; margin-top: 15px;"><code>function isIdentityOrTranslation(matrix) {
+    var m = matrix;
+
+    return m.m11 === 1 && m.m12 === 0 && m.m13 === 0 && m.m14 === 0 &&
+           m.m21 === 0 && m.m22 === 1 && m.m23 === 0 && m.m24 === 0 &&
+           m.m31 === 0 && m.m31 === 0 && m.m33 === 1 && m.m34 === 0 &&
+    /* m41, m42 and m43 are the translation points */   m.m44 === 1;
+}
+</code></pre></div><hr/></div><div class="method"><a name="helper/adjoint"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>adjoint</h2><blockquote>Declared as <code>function adjoint(matrix) </code></blockquote><div class="doc"><p>Returns the adjoint matrix.<br /> @return <strong>XCSSMatrix</strong></p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:82" style="display: none; margin-top: 15px;"><code>function adjoint(matrix) {
+    var m = matrix,
+        // make `result` the same type as the given metric
+        result = new matrix.constructor(),
+
+        a1 = m.m11, b1 = m.m12, c1 = m.m13, d1 = m.m14,
+        a2 = m.m21, b2 = m.m22, c2 = m.m23, d2 = m.m24,
+        a3 = m.m31, b3 = m.m32, c3 = m.m33, d3 = m.m34,
+        a4 = m.m41, b4 = m.m42, c4 = m.m43, d4 = m.m44;
+
+    // Row column labeling reversed since we transpose rows & columns
+    result.m11 =  determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4);
+    result.m21 = -determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4);
+    result.m31 =  determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4);
+    result.m41 = -determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
+
+    result.m12 = -determinant3x3(b1, b3, b4, c1, c3, c4, d1, d3, d4);
+    result.m22 =  determinant3x3(a1, a3, a4, c1, c3, c4, d1, d3, d4);
+    result.m32 = -determinant3x3(a1, a3, a4, b1, b3, b4, d1, d3, d4);
+    result.m42 =  determinant3x3(a1, a3, a4, b1, b3, b4, c1, c3, c4);
+
+    result.m13 =  determinant3x3(b1, b2, b4, c1, c2, c4, d1, d2, d4);
+    result.m23 = -determinant3x3(a1, a2, a4, c1, c2, c4, d1, d2, d4);
+    result.m33 =  determinant3x3(a1, a2, a4, b1, b2, b4, d1, d2, d4);
+    result.m43 = -determinant3x3(a1, a2, a4, b1, b2, b4, c1, c2, c4);
+
+    result.m14 = -determinant3x3(b1, b2, b3, c1, c2, c3, d1, d2, d3);
+    result.m24 =  determinant3x3(a1, a2, a3, c1, c2, c3, d1, d2, d3);
+    result.m34 = -determinant3x3(a1, a2, a3, b1, b2, b3, d1, d2, d3);
+    result.m44 =  determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3);
+
+    return result;
+}
+</code></pre></div><hr/></div>
+          </div>
+        </div>
+    </body>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script><script src="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.js"></script><script src="http://twitter.github.com/bootstrap/assets/js/bootstrap-dropdown.js"></script>
+    <script>
+      window.prettyPrint && prettyPrint()
+    </script>
+</html>
