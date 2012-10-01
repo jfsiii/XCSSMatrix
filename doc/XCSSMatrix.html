@@ -183,15 +183,17 @@
     tx.m23 = tx.m32 = 2 * sinA * cosA;
     tx.m32 *= -1;
 
-    var isIdentity = (this.toString() === (new XCSSMatrix).toString());
+    var identityMatrix = new XCSSMatrix(); // returns idenity matrix by default
+    var isIdentity     = this.toString() === idenity.toString();
+    var rotatedMatrix  = isIdentity ?
+            tz.multiply(ty).multiply(tx) :
+            this.multiply(tx).multiply(ty).multiply(tz);
 
-    return (isIdentity)
-        ? tz.multiply(ty).multiply(tx)
-        : this.multiply(tx).multiply(ty).multiply(tz);
+    return rotatedMatrix;
 };
 </code></pre></div><hr/></div><div class="method"><a name="instance/rotateAxisAngle"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.rotateAxisAngle</h2><blockquote>Declared as <code>function (x, y, z, a) </code></blockquote><div class="doc"><p>Returns the result of rotating the matrix around a given vector by a given<br /> angle.</p>
 
-<p>If the given vector is the origin vector then the matrix is rotated by the<br /> given angle around the z axis.<br /> @method<br /> @member<br /> @param <strong>number</strong> rotX - The rotation around the x axis.<br /> @param <strong>number</strong> rotY - The rotation around the y axis. If undefined, the x component is used.<br /> @param <strong>number</strong> rotZ - The rotation around the z axis. If undefined, the x component is used.<br /> @param <strong>number</strong> angle - The angle of rotation about the axis vector, in degrees.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:260" style="display: none; margin-top: 15px;"><code>function (x, y, z, a) {
+<p>If the given vector is the origin vector then the matrix is rotated by the<br /> given angle around the z axis.<br /> @method<br /> @member<br /> @param <strong>number</strong> rotX - The rotation around the x axis.<br /> @param <strong>number</strong> rotY - The rotation around the y axis. If undefined, the x component is used.<br /> @param <strong>number</strong> rotZ - The rotation around the z axis. If undefined, the x component is used.<br /> @param <strong>number</strong> angle - The angle of rotation about the axis vector, in degrees.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:262" style="display: none; margin-top: 15px;"><code>function (x, y, z, a) {
     if (typeof x !== 'number' || isNaN(x)) x = 0;
     if (typeof y !== 'number' || isNaN(y)) y = 0;
     if (typeof z !== 'number' || isNaN(z)) z = 0;
@@ -250,7 +252,7 @@
 
     return this.multiply(t);
 };
-</code></pre></div><hr/></div><div class="method"><a name="instance/scale"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.scale</h2><blockquote>Declared as <code>function (scaleX, scaleY, scaleZ) </code></blockquote><div class="doc"><p>Returns the result of scaling the matrix by a given vector.<br /> @method<br /> @member<br /> @param <strong>number</strong> scaleX - the scaling factor in the x axis.<br /> @param <strong>number</strong> scaleY - the scaling factor in the y axis. If undefined, the x component is used.<br /> @param <strong>number</strong> scaleZ - the scaling factor in the z axis. If undefined, 1 is used.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:329" style="display: none; margin-top: 15px;"><code>function (scaleX, scaleY, scaleZ) {
+</code></pre></div><hr/></div><div class="method"><a name="instance/scale"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.scale</h2><blockquote>Declared as <code>function (scaleX, scaleY, scaleZ) </code></blockquote><div class="doc"><p>Returns the result of scaling the matrix by a given vector.<br /> @method<br /> @member<br /> @param <strong>number</strong> scaleX - the scaling factor in the x axis.<br /> @param <strong>number</strong> scaleY - the scaling factor in the y axis. If undefined, the x component is used.<br /> @param <strong>number</strong> scaleZ - the scaling factor in the z axis. If undefined, 1 is used.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:331" style="display: none; margin-top: 15px;"><code>function (scaleX, scaleY, scaleZ) {
     var transform = new XCSSMatrix();
 
     if (typeof scaleX !== 'number' || isNaN(scaleX)) scaleX = 1;
@@ -263,7 +265,7 @@
 
     return this.multiply(transform);
 };
-</code></pre></div><hr/></div><div class="method"><a name="instance/skewX"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.skewX</h2><blockquote>Declared as <code>function (degrees) </code></blockquote><div class="doc"><p>Returns the result of skewing the matrix by a given vector.<br /> @method<br /> @member<br /> @param <strong>number</strong> skewX - The scaling factor in the x axis.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:350" style="display: none; margin-top: 15px;"><code>function (degrees) {
+</code></pre></div><hr/></div><div class="method"><a name="instance/skewX"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.skewX</h2><blockquote>Declared as <code>function (degrees) </code></blockquote><div class="doc"><p>Returns the result of skewing the matrix by a given vector.<br /> @method<br /> @member<br /> @param <strong>number</strong> skewX - The scaling factor in the x axis.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:352" style="display: none; margin-top: 15px;"><code>function (degrees) {
     var radians   = utils.angles.deg2rad(degrees);
     var transform = new XCSSMatrix();
 
@@ -271,7 +273,7 @@
 
     return this.multiply(transform);
 };
-</code></pre></div><hr/></div><div class="method"><a name="instance/skewY"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.skewY</h2><blockquote>Declared as <code>function (degrees) </code></blockquote><div class="doc"><p>Returns the result of skewing the matrix by a given vector.<br /> @method<br /> @member<br /> @param <strong>number</strong> skewY - the scaling factor in the x axis.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:350" style="display: none; margin-top: 15px;"><code>function (degrees) {
+</code></pre></div><hr/></div><div class="method"><a name="instance/skewY"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.skewY</h2><blockquote>Declared as <code>function (degrees) </code></blockquote><div class="doc"><p>Returns the result of skewing the matrix by a given vector.<br /> @method<br /> @member<br /> @param <strong>number</strong> skewY - the scaling factor in the x axis.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:352" style="display: none; margin-top: 15px;"><code>function (degrees) {
     var radians   = utils.angles.deg2rad(degrees);
     var transform = new XCSSMatrix();
 
@@ -279,7 +281,7 @@
 
     return this.multiply(transform);
 };
-</code></pre></div><hr/></div><div class="method"><a name="instance/translate"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.translate</h2><blockquote>Declared as <code>function (x, y, z) </code></blockquote><div class="doc"><p>Returns the result of translating the matrix by a given vector.<br /> @method<br /> @member<br /> @param <strong>number</strong> x - The x component of the vector.<br /> @param <strong>number</strong> y - The y component of the vector.<br /> @param <strong>number</strong> z - The z component of the vector. If undefined, 0 is used.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:384" style="display: none; margin-top: 15px;"><code>function (x, y, z) {
+</code></pre></div><hr/></div><div class="method"><a name="instance/translate"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.translate</h2><blockquote>Declared as <code>function (x, y, z) </code></blockquote><div class="doc"><p>Returns the result of translating the matrix by a given vector.<br /> @method<br /> @member<br /> @param <strong>number</strong> x - The x component of the vector.<br /> @param <strong>number</strong> y - The y component of the vector.<br /> @param <strong>number</strong> z - The z component of the vector. If undefined, 0 is used.<br /> @returns XCSSMatrix</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:386" style="display: none; margin-top: 15px;"><code>function (x, y, z) {
     var t = new XCSSMatrix();
 
     if (typeof x !== 'number' || isNaN(x)) x = 0;
@@ -292,14 +294,14 @@
 
     return this.multiply(t);
 };
-</code></pre></div><hr/></div><div class="method"><a name="instance/setMatrixValue"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.setMatrixValue</h2><blockquote>Declared as <code>function (domstr) </code></blockquote><div class="doc"><p>Sets the matrix values using a string representation, such as that produced<br /> by the [[XCSSMatrix#toString]] method.<br /> @method<br /> @member<br /> @params <strong>string</strong> domstr - A string representation of a 2D or 3D transform matrix<br />   in the form given by the CSS transform property, i.e. just like the<br />   output from [[XCSSMatrix#toString]].<br /> @returns undefined</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:408" style="display: none; margin-top: 15px;"><code>function (domstr) {
+</code></pre></div><hr/></div><div class="method"><a name="instance/setMatrixValue"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.setMatrixValue</h2><blockquote>Declared as <code>function (domstr) </code></blockquote><div class="doc"><p>Sets the matrix values using a string representation, such as that produced<br /> by the [[XCSSMatrix#toString]] method.<br /> @method<br /> @member<br /> @params <strong>string</strong> domstr - A string representation of a 2D or 3D transform matrix<br />   in the form given by the CSS transform property, i.e. just like the<br />   output from [[XCSSMatrix#toString]].<br /> @returns undefined</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:410" style="display: none; margin-top: 15px;"><code>function (domstr) {
 
     var matrixString = toMatrixString(domstr.trim());
     var matrixObject = utils.transp.statementToObject(matrixString);
 
     if (!matrixObject) return;
 
-    var is3d   = matrixObject.key === 'matrix3d';
+    var is3d   = matrixObject.key === utils.transp.matrixFn3d;
     var keygen = is3d ? indextoKey3d : indextoKey2d;
     var values = matrixObject.value;
     var count  = values.length;
@@ -315,30 +317,32 @@
     var points, prefix;
 
     if (utils.matrix.isAffine(this)) {
-        prefix = 'matrix(';
+        prefix = utils.transp.matrixFn2d;
         points = points2d;
     } else {
-        prefix = 'matrix3d(';
+        prefix = utils.transp.matrixFn3d;
         points = points3d;
     }
 
-    return prefix + points.map(function (p) {
-        return this[p].toFixed(6);
-    }, this).join(', ') + ')';
+    return prefix + '(' +
+        points.map(function (p) {
+            return this[p].toFixed(6);
+        }, this) .join(', ') +
+        ')';
 };
-</code></pre></div><hr/></div><a name="helper"></a><div class="page-header"><h2>XCSSMatrix - helper methods</h2></div><ul class="nav nav-pills"><li><a href="#helper/indextoKey2d">indextoKey2d</a></li><li><a href="#helper/indextoKey3d">indextoKey3d</a></li><li><a href="#helper/objectValues">objectValues</a></li><li><a href="#helper/cssFunctionToJsFunction">cssFunctionToJsFunction</a></li><li><a href="#helper/parsedToDegrees">parsedToDegrees</a></li><li><a href="#helper/transformMatrix">transformMatrix</a></li><li><a href="#helper/toMatrixString">toMatrixString</a></li></ul><div class="method"><a name="helper/indextoKey2d"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>indextoKey2d</h2><blockquote>Declared as <code>function indextoKey2d (index) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:428" style="display: none; margin-top: 15px;"><code>function indextoKey2d (index) {
+</code></pre></div><hr/></div><a name="helper"></a><div class="page-header"><h2>XCSSMatrix - helper methods</h2></div><ul class="nav nav-pills"><li><a href="#helper/indextoKey2d">indextoKey2d</a></li><li><a href="#helper/indextoKey3d">indextoKey3d</a></li><li><a href="#helper/objectValues">objectValues</a></li><li><a href="#helper/cssFunctionToJsFunction">cssFunctionToJsFunction</a></li><li><a href="#helper/parsedToDegrees">parsedToDegrees</a></li><li><a href="#helper/transformMatrix">transformMatrix</a></li><li><a href="#helper/toMatrixString">toMatrixString</a></li></ul><div class="method"><a name="helper/indextoKey2d"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>indextoKey2d</h2><blockquote>Declared as <code>function indextoKey2d (index) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:430" style="display: none; margin-top: 15px;"><code>function indextoKey2d (index) {
     return String.fromCharCode(index + 97); // ASCII char 97 == 'a'
 }
-</code></pre></div><hr/></div><div class="method"><a name="helper/indextoKey3d"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>indextoKey3d</h2><blockquote>Declared as <code>function indextoKey3d (index) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:432" style="display: none; margin-top: 15px;"><code>function indextoKey3d (index) {
+</code></pre></div><hr/></div><div class="method"><a name="helper/indextoKey3d"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>indextoKey3d</h2><blockquote>Declared as <code>function indextoKey3d (index) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:434" style="display: none; margin-top: 15px;"><code>function indextoKey3d (index) {
     return ('m' + (Math.floor(index / 4) + 1)) + (index % 4 + 1);
 }
-</code></pre></div><hr/></div><div class="method"><a name="helper/objectValues"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>objectValues</h2><blockquote>Declared as <code>function objectValues(obj) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:543" style="display: none; margin-top: 15px;"><code>function objectValues(obj) {
+</code></pre></div><hr/></div><div class="method"><a name="helper/objectValues"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>objectValues</h2><blockquote>Declared as <code>function objectValues(obj) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:547" style="display: none; margin-top: 15px;"><code>function objectValues(obj) {
     return obj.value;
 }
-</code></pre></div><hr/></div><div class="method"><a name="helper/cssFunctionToJsFunction"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>cssFunctionToJsFunction</h2><blockquote>Declared as <code>function cssFunctionToJsFunction(cssFunctionName) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:547" style="display: none; margin-top: 15px;"><code>function cssFunctionToJsFunction(cssFunctionName) {
+</code></pre></div><hr/></div><div class="method"><a name="helper/cssFunctionToJsFunction"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>cssFunctionToJsFunction</h2><blockquote>Declared as <code>function cssFunctionToJsFunction(cssFunctionName) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:551" style="display: none; margin-top: 15px;"><code>function cssFunctionToJsFunction(cssFunctionName) {
     return jsFunctions[cssFunctionName];
 }
-</code></pre></div><hr/></div><div class="method"><a name="helper/parsedToDegrees"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>parsedToDegrees</h2><blockquote>Declared as <code>function parsedToDegrees(parsed) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:551" style="display: none; margin-top: 15px;"><code>function parsedToDegrees(parsed) {
+</code></pre></div><hr/></div><div class="method"><a name="helper/parsedToDegrees"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>parsedToDegrees</h2><blockquote>Declared as <code>function parsedToDegrees(parsed) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:555" style="display: none; margin-top: 15px;"><code>function parsedToDegrees(parsed) {
     if (parsed.units === 'rad') {
         parsed.value = utils.angles.rad2deg(parsed.value);
         parsed.units = 'deg';
@@ -350,7 +354,7 @@
 
     return parsed;
 }
-</code></pre></div><hr/></div><div class="method"><a name="helper/transformMatrix"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>transformMatrix</h2><blockquote>Declared as <code>function transformMatrix(matrix, operation) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:564" style="display: none; margin-top: 15px;"><code>function transformMatrix(matrix, operation) {
+</code></pre></div><hr/></div><div class="method"><a name="helper/transformMatrix"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>transformMatrix</h2><blockquote>Declared as <code>function transformMatrix(matrix, operation) </code></blockquote><div class="doc"></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:568" style="display: none; margin-top: 15px;"><code>function transformMatrix(matrix, operation) {
     // convert to degrees because all CSSMatrix methods expect degrees
     operation.value = operation.value.map(parsedToDegrees);
 
@@ -359,7 +363,7 @@
 
     return result || matrix;
 }
-</code></pre></div><hr/></div><div class="method"><a name="helper/toMatrixString"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>toMatrixString</h2><blockquote>Declared as <code>function toMatrixString(transformString) </code></blockquote><div class="doc"><p>Tranforms a <code>el.style.WebkitTransform</code>-style string<br /> (like <code>rotate(18rad) translate3d(50px, 100px, 10px)</code>)<br /> into a <code>getComputedStyle(el)</code>-style matrix string<br /> (like <code>matrix3d(0.660316, -0.750987, 0, 0, 0.750987, 0.660316, 0, 0, 0, 0, 1, 0, 108.114560, 28.482308, 10, 1)</code>)<br /> @private<br /> @method<br /> @param <strong>string</strong> transformString - <code>el.style.WebkitTransform</code>-style string (like <code>rotate(18rad) translate3d(50px, 100px, 10px)</code>)</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:583" style="display: none; margin-top: 15px;"><code>function toMatrixString(transformString) {
+</code></pre></div><hr/></div><div class="method"><a name="helper/toMatrixString"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>toMatrixString</h2><blockquote>Declared as <code>function toMatrixString(transformString) </code></blockquote><div class="doc"><p>Tranforms a <code>el.style.WebkitTransform</code>-style string<br /> (like <code>rotate(18rad) translate3d(50px, 100px, 10px)</code>)<br /> into a <code>getComputedStyle(el)</code>-style matrix string<br /> (like <code>matrix3d(0.660316, -0.750987, 0, 0, 0.750987, 0.660316, 0, 0, 0, 0, 1, 0, 108.114560, 28.482308, 10, 1)</code>)<br /> @private<br /> @method<br /> @param <strong>string</strong> transformString - <code>el.style.WebkitTransform</code>-style string (like <code>rotate(18rad) translate3d(50px, 100px, 10px)</code>)</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:587" style="display: none; margin-top: 15px;"><code>function toMatrixString(transformString) {
     var statements = utils.transp.stringToStatements(transformString);
 
     if (statements.length === 1 && (/^matrix/).test(transformString)) {
