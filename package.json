@@ -1,22 +1,27 @@
 {
-    "name" : "xcssmatrix",
-    "version" : "0.0.5",
-    "description" : "Cross-browser, spec compliant, XCSSMatrix shim.",
-    "main" : "index.js",
-    "repository" : {
-        "type" : "git",
-        "url" : "git://github.com/jfsiii/XCSSMatrix.git"
-    },
-    "homepage" : "https://github.com/jfsiii/XCSSMatrix",
-    "keywords" : [
-        "matrix",
-        "CSS",
-        "CSSMatrix",
-        "WebKitCSSMatrix"
-    ],
-    "author" : {
-        "name" : "John Schulz",
-        "url" : "http://JFSIII.org"
-    },
-    "license" : "MIT"
+  "name" : "xcssmatrix",
+  "version" : "0.0.5",
+  "description" : "Cross-browser, spec compliant, XCSSMatrix shim.",
+  "main" : "index.js",
+  "repository" : {
+    "type" : "git",
+    "url" : "git://github.com/jfsiii/XCSSMatrix.git"
+  },
+  "homepage" : "https://github.com/jfsiii/XCSSMatrix",
+  "keywords" : [
+    "matrix",
+    "CSS",
+    "CSSMatrix",
+    "WebKitCSSMatrix"
+  ],
+  "author" : {
+    "name" : "John Schulz",
+    "url" : "http://JFSIII.org"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://jfsiii.mit-license.org"
+    }
+  ]
 }
