@@ -295,20 +295,20 @@
 </code></pre></div><hr/></div><div class="method"><a name="instance/setMatrixValue"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.setMatrixValue</h2><blockquote>Declared as <code>function (domstr) </code></blockquote><div class="doc"><p>Sets the matrix values using a string representation, such as that produced<br /> by the [[XCSSMatrix#toString]] method.<br /> @method<br /> @member<br /> @params <strong>string</strong> domstr - A string representation of a 2D or 3D transform matrix<br />   in the form given by the CSS transform property, i.e. just like the<br />   output from [[XCSSMatrix#toString]].<br /> @returns undefined</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:408" style="display: none; margin-top: 15px;"><code>function (domstr) {
 
     var matrixString = toMatrixString(domstr.trim());
-    var matrixOnly   = /^matrix(3d)?\(\s*(.+)\s*\)$/;
-    var matrixParts  = matrixString.match(matrixOnly);
+    var matrixObject = utils.transp.statementToObject(matrixString);
 
-    if (!matrixParts) return;
+    if (!matrixObject) return;
 
-    var is3d   = !!matrixParts[1];
-    var chunks = matrixParts[2].split(/\s*,\s*/);
-    var count  = chunks.length;
+    var is3d   = matrixObject.key === 'matrix3d';
+    var keygen = is3d ? indextoKey3d : indextoKey2d;
+    var values = matrixObject.value;
+    var count  = values.length;
 
     if ((is3d && count !== 16) || !(is3d || count === 6)) return;
 
-    chunks.map(Number).forEach(function (num, i) {
-        var point = is3d ? indextoKey3d(i) : indextoKey2d(i);
-        this[point] = num;
+    values.forEach(function (obj, i) {
+        var key = keygen(i);
+        this[key] = obj.value;
     }, this);
 };
 </code></pre></div><hr/></div><div class="method"><a name="instance/toString"></a><h2><i class="icon icon-eye-open"></i> <span style="color: grey">XCSSMatrix.</span><span style="color: green">prototype</span>.toString</h2><blockquote>Declared as <code>function () </code></blockquote><div class="doc"><p>Returns a string representation of the matrix.<br /> @method<br /> @memberof XCSSMatrix<br /> @returns <strong>string</strong> matrixString - a string like <code>matrix(1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)</code></p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:91" style="display: none; margin-top: 15px;"><code>function () {
@@ -360,11 +360,11 @@
     return result || matrix;
 }
 </code></pre></div><hr/></div><div class="method"><a name="helper/toMatrixString"></a><h2><i class="icon icon-eye-close"></i> <span style="color: grey"></span>toMatrixString</h2><blockquote>Declared as <code>function toMatrixString(transformString) </code></blockquote><div class="doc"><p>Tranforms a <code>el.style.WebkitTransform</code>-style string<br /> (like <code>rotate(18rad) translate3d(50px, 100px, 10px)</code>)<br /> into a <code>getComputedStyle(el)</code>-style matrix string<br /> (like <code>matrix3d(0.660316, -0.750987, 0, 0, 0.750987, 0.660316, 0, 0, 0, 0, 1, 0, 108.114560, 28.482308, 10, 1)</code>)<br /> @private<br /> @method<br /> @param <strong>string</strong> transformString - <code>el.style.WebkitTransform</code>-style string (like <code>rotate(18rad) translate3d(50px, 100px, 10px)</code>)</p></div><div class="source-code"><a class="btn btn-small" onclick="$(this).parent().find('pre').toggle()">Source code</a><pre class="prettyprint linenums:583" style="display: none; margin-top: 15px;"><code>function toMatrixString(transformString) {
-    var statements        = utils.transp.stringToStatements(transformString);
-    var statementIsMatrix = function (t) { return (/^matrix/).test(t); };
-    var onlyMatrices      = statements && statements.every(statementIsMatrix);
+    var statements = utils.transp.stringToStatements(transformString);
 
-    if (statements.length === 1 && onlyMatrices) return transformString;
+    if (statements.length === 1 && (/^matrix/).test(transformString)) {
+        return transformString;
+    }
 
     // We only want the statement to pass to `utils.transp.statementToObject`
     //   not the other values (index, list) from `map`

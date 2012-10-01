@@ -801,20 +801,20 @@ XCSSMatrix.prototype.translate = function (x, y, z) {
 XCSSMatrix.prototype.setMatrixValue = function (domstr) {
 
     var matrixString = toMatrixString(domstr.trim());
-    var matrixOnly   = /^matrix(3d)?\(\s*(.+)\s*\)$/;
-    var matrixParts  = matrixString.match(matrixOnly);
+    var matrixObject = utils.transp.statementToObject(matrixString);
 
-    if (!matrixParts) return;
+    if (!matrixObject) return;
 
-    var is3d   = !!matrixParts[1];
-    var chunks = matrixParts[2].split(/\s*,\s*/);
-    var count  = chunks.length;
+    var is3d   = matrixObject.key === 'matrix3d';
+    var keygen = is3d ? indextoKey3d : indextoKey2d;
+    var values = matrixObject.value;
+    var count  = values.length;
 
     if ((is3d && count !== 16) || !(is3d || count === 6)) return;
 
-    chunks.map(Number).forEach(function (num, i) {
-        var point = is3d ? indextoKey3d(i) : indextoKey2d(i);
-        this[point] = num;
+    values.forEach(function (obj, i) {
+        var key = keygen(i);
+        this[key] = obj.value;
     }, this);
 };
 
@@ -974,11 +974,11 @@ function transformMatrix(matrix, operation) {
  *  @param {string} transformString - `el.style.WebkitTransform`-style string (like `rotate(18rad) translate3d(50px, 100px, 10px)`)
  */
 function toMatrixString(transformString) {
-    var statements        = utils.transp.stringToStatements(transformString);
-    var statementIsMatrix = function (t) { return (/^matrix/).test(t); };
-    var onlyMatrices      = statements && statements.every(statementIsMatrix);
+    var statements = utils.transp.stringToStatements(transformString);
 
-    if (statements.length === 1 && onlyMatrices) return transformString;
+    if (statements.length === 1 && (/^matrix/).test(transformString)) {
+        return transformString;
+    }
 
     // We only want the statement to pass to `utils.transp.statementToObject`
     //   not the other values (index, list) from `map`
