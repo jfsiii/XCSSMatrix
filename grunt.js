@@ -10,9 +10,9 @@ module.exports = function(grunt) {
     meta: {
       banner: '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
         '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
-        '<%= pkg.homepage ? "* " + pkg.homepage + "\n" : "" %>' +
-        '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
-        ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */'
+        '<%= pkg.homepage ? " * " + pkg.homepage + "\n" : "" %>' +
+        ' * Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>\n' +
+        ' * Licensed <%= _.map(pkg.licenses, function(license) { return license.type + " <" + license.url + ">" }).join(", ") %> */'
     },
     lint: {
       files: ['grunt.js', 'lib/**/*.js', 'test/**/*.js']
@@ -22,7 +22,7 @@ module.exports = function(grunt) {
     },
     concat: {
       dist: {
-        src: ['<banner:meta.banner>', '<file_strip_banner:lib/<%= pkg.name %>.js>'],
+        src: ['<banner:meta.banner>', '<file_strip_banner:dist/<%= pkg.name %>.js>'],
         dest: 'dist/<%= pkg.name %>.js'
       }
     },
@@ -43,7 +43,7 @@ module.exports = function(grunt) {
     uglify: {},
     shell: {
       browserify: {
-        command: 'browserify index.js lib/*.js -o <config:concat.dist.dest>',
+        command: 'browserify index.js lib/*.js -o dist/xcssmatrix.js',
         stdout: false
       },
       doc: {
