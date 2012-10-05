@@ -42,8 +42,8 @@ module.exports = function(grunt) {
     },
     uglify: {},
     shell: {
-      browserify: {
-        command: 'browserify index.js lib/*.js -o dist/xcssmatrix.js',
+      webmake: {
+        command: 'webmake index.js dist/xcssmatrix.js',
         stdout: false
       },
       doc: {
@@ -54,6 +54,6 @@ module.exports = function(grunt) {
   });
 
   // Default task.
-  grunt.registerTask('default', 'lint test shell:browserify concat min shell:doc');
+  grunt.registerTask('default', 'lint test shell:webmake concat min shell:doc');
 
 };
