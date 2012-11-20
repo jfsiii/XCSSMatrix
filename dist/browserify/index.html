@@ -1,0 +1,13 @@
+<!doctype HTML>
+<html>
+  <head>
+    <script src="XCSSMatrix.js"></script>
+    <script>
+      var XCSSMatrix = require('./XCSSMatrix');
+      var m2d        = new XCSSMatrix('rotate(1rad) translate(23px) skew(45deg,)');
+      var m3d        = new XCSSMatrix('rotateY(1rad) translate3d(23px, 34px, 45px)');
+      console.log("2D", m2d);
+      console.log("3D", m3d);
+    </script>
+  </head>
+</html>
