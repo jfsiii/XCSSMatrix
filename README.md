@@ -4,9 +4,13 @@ XCSSMatrix
 The `XCSSMatrix` class is intended to bring the functionality from
 [`WebKitCSSMatrix`][WebKitCSSMatrixDocs] to other browsers. The `CSSMatrix` interface was defined in the [CSS 2D Transforms][2d] and [CSS 3D Transforms][3d] Module specifications.
 
+## Extracted from Firmin ##
 The implementation was largely copied from [Firmin](http://extralogical.net/projects/firmin/)'s [`FirminCSSMatrix`](https://github.com/beastaugh/firmin/blob/master/src/matrix.js) object.
 
+## Tests ##
 Its API is intended to match the spec. Tests have been copied from the WebKitCSSMatrix tests for [2D](2dtests) and [3D](3dtests).
+
+At the moment, it does not throw errors, which is (was) against the spec. This is by design. I didn't want to require wrapping it in `try/catch`. However, I do plan on adding a flag or other way to control whether it throws errors or not.
 
 Please create tickets(and/or tests) for any failing cases.
 
