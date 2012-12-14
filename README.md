@@ -2,7 +2,54 @@ XCSSMatrix
 ==========
 
 The `XCSSMatrix` class is intended to bring the functionality from
-[`WebKitCSSMatrix`][WebKitCSSMatrixDocs] to other browsers. The `CSSMatrix` interface was defined in the [CSS 2D Transforms][2d] and [CSS 3D Transforms][3d] Module specifications.
+[`WebKitCSSMatrix`][WebKitCSSMatrixDocs] to other browsers, and NodeJS. The `CSSMatrix` interface was defined in the [CSS 2D Transforms][2d] and [CSS 3D Transforms][3d] Module specifications.
+
+## Getting started
+### nodejs
+```
+npm install xcssmatrix
+var XCSSMatrix = require('xcssmatrix')
+```
+
+### Browser
+See the examples in the `dist` directory
+
+#### via require.js
+```
+ <script src="http://requirejs.org/docs/release/2.1.0/minified/require.js"></script>
+ <script>
+   require(['XCSSMatrix'], function(XCSSMatrix) {
+     // use XCSSMatrix
+   });
+ </script>    
+```
+
+#### via browserify
+```
+ <script src="XCSSMatrix.js"></script>
+ <script>
+   var XCSSMatrix = require('./XCSSMatrix');
+ </script>
+```
+
+### Usage
+
+```
+// create a new Matrix
+> var matrix = new XCSSMatrix('translate(12px) rotateX(34deg) rotateY(45rad) skew(67deg)')
+undefined
+> matrix.toString()
+'matrix3d(0.525322, 0.475819, -0.705431, 0.000000, 1.237581, 1.949997, -1.102698, 0.000000, 0.850904, -0.293756, 0.435512, 0.000000, 12.000000, 0.000000, 0.000000, 1.000000)'
+// matrix operations aren't destructive
+> var originalCSS = matrix.toString()
+> matrix.rotate(90)
+> matrix.toString() === originalCSS
+true
+// assign the result to the itself to update the matrix
+> matrix = matrix.rotate(90)
+> matrix.toString() === originalCSS
+false
+```
 
 ## Extracted from Firmin ##
 The implementation was largely copied from [Firmin](http://extralogical.net/projects/firmin/)'s [`FirminCSSMatrix`](https://github.com/beastaugh/firmin/blob/master/src/matrix.js) object.
