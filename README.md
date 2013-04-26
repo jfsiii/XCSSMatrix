@@ -57,7 +57,7 @@ The implementation was largely copied from [Firmin](http://extralogical.net/proj
 ## Tests ##
 Its API is intended to match the spec. Tests have been copied from the WebKitCSSMatrix tests for [2D](2dtests) and [3D](3dtests).
 
-At the moment, it does not throw errors, which is (was) against the spec. This is by design. I didn't want to require wrapping it in `try/catch`. However, I do plan on adding a flag or other way to control whether it throws errors or not.
+At the moment, it does not throw errors, which is (was) against the spec. See #1 for more.
 
 Please create tickets(and/or tests) for any failing cases.
 
