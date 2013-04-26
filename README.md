@@ -57,7 +57,7 @@ The implementation was largely copied from [Firmin](http://extralogical.net/proj
 ## Tests ##
 Its API is intended to match the spec. Tests have been copied from the WebKitCSSMatrix tests for [2D](2dtests) and [3D](3dtests).
 
-At the moment, it does not throw errors, which is (was) against the spec. See #1 for more.
+At the moment, it does not throw errors, which is (was) against the spec. See [issue #1](https://github.com/jfsiii/XCSSMatrix/issues/1) for more.
 
 Please create tickets(and/or tests) for any failing cases.
 
