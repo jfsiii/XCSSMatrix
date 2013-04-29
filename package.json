@@ -28,13 +28,15 @@
   },
   "testling": {
     "files": "test/*.js",
-    "browsers": {
-      "ie": [ 8, 9 ],
-      "firefox": [ 13 ],
-      "chrome": [ 20 ],
-      "safari": [ 5.1 ],
-      "opera": [ 12 ]
-    }
+    "browsers": [
+      "ie/6..latest",
+      "chrome/1..latest",
+      "firefox/3..latest",
+      "safari/4..latest",
+      "opera/11.0..latest",
+      "iphone/3..latest",
+      "ipad/3..latest"
+    ]
   },
   "readmeFilename": "README.md",
   "directories": {
