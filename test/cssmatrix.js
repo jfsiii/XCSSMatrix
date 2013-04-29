@@ -1,5 +1,5 @@
 var XCSSMatrix = require('..');
-var test       = require('tap').test;
+var test       = require('tape');
 
 // from http://src.chromium.org/svn/branches/WebKit/472/LayoutTests/transforms/cssmatrix-2d-interface.xhtml
 test('2D', function (t) {
