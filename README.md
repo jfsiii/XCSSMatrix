@@ -4,6 +4,11 @@ XCSSMatrix
 The `XCSSMatrix` class is intended to bring the functionality from
 [`WebKitCSSMatrix`][WebKitCSSMatrixDocs] to other browsers, and NodeJS. The `CSSMatrix` interface was defined in the [CSS 2D Transforms][2d] and [CSS 3D Transforms][3d] Module specifications.
 
+## Browser Support ##
+Chrome 6+, Safari 5+, FF4+, Opera 11+, IE9+
+
+[!['Test results'](https://ci.testling.com/jfsiii/XCSSMatrix.png "Test results")](https://ci.testling.com/jfsiii/XCSSMatrix)
+
 ## Getting started
 ### nodejs
 ```
@@ -51,11 +56,11 @@ true
 false
 ```
 
-## Extracted from Firmin ##
+## Tests ##
+Its API is intended to match the spec. [The tests](http://jfsiii.github.io/firmin/test/) have been copied from the WebKitCSSMatrix tests for [2D](2dtests) and [3D](3dtests).
+
 The implementation was largely copied from [Firmin](http://extralogical.net/projects/firmin/)'s [`FirminCSSMatrix`](https://github.com/beastaugh/firmin/blob/master/src/matrix.js) object.
 
-## Tests ##
-Its API is intended to match the spec. Tests have been copied from the WebKitCSSMatrix tests for [2D](2dtests) and [3D](3dtests).
 
 At the moment, it does not throw errors, which is (was) against the spec. See [issue #1](https://github.com/jfsiii/XCSSMatrix/issues/1) for more.
 
