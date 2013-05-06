@@ -26,14 +26,14 @@ See the examples in the `dist` directory
    require(['XCSSMatrix'], function(XCSSMatrix) {
      // use XCSSMatrix
    });
- </script>    
+ </script>
 ```
 
 #### via browserify
 ```
  <script src="XCSSMatrix.js"></script>
  <script>
-   var XCSSMatrix = require('./XCSSMatrix');
+   var m3d = new XCSSMatrix('rotateY(1rad) translate3d(23px, 34px, 45px)');
  </script>
 ```
 

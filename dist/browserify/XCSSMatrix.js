@@ -1,599 +1,12 @@
-var require = function (file, cwd) {
-    var resolved = require.resolve(file, cwd || '/');
-    var mod = require.modules[resolved];
-    if (!mod) throw new Error(
-        'Failed to resolve module ' + file + ', tried ' + resolved
-    );
-    var cached = require.cache[resolved];
-    var res = cached? cached.exports : mod();
-    return res;
-};
-
-require.paths = [];
-require.modules = {};
-require.cache = {};
-require.extensions = [".js",".coffee",".json"];
-
-require._core = {
-    'assert': true,
-    'events': true,
-    'fs': true,
-    'path': true,
-    'vm': true
-};
-
-require.resolve = (function () {
-    return function (x, cwd) {
-        if (!cwd) cwd = '/';
-        
-        if (require._core[x]) return x;
-        var path = require.modules.path();
-        cwd = path.resolve('/', cwd);
-        var y = cwd || '/';
-        
-        if (x.match(/^(?:\.\.?\/|\/)/)) {
-            var m = loadAsFileSync(path.resolve(y, x))
-                || loadAsDirectorySync(path.resolve(y, x));
-            if (m) return m;
-        }
-        
-        var n = loadNodeModulesSync(x, y);
-        if (n) return n;
-        
-        throw new Error("Cannot find module '" + x + "'");
-        
-        function loadAsFileSync (x) {
-            x = path.normalize(x);
-            if (require.modules[x]) {
-                return x;
-            }
-            
-            for (var i = 0; i < require.extensions.length; i++) {
-                var ext = require.extensions[i];
-                if (require.modules[x + ext]) return x + ext;
-            }
-        }
-        
-        function loadAsDirectorySync (x) {
-            x = x.replace(/\/+$/, '');
-            var pkgfile = path.normalize(x + '/package.json');
-            if (require.modules[pkgfile]) {
-                var pkg = require.modules[pkgfile]();
-                var b = pkg.browserify;
-                if (typeof b === 'object' && b.main) {
-                    var m = loadAsFileSync(path.resolve(x, b.main));
-                    if (m) return m;
-                }
-                else if (typeof b === 'string') {
-                    var m = loadAsFileSync(path.resolve(x, b));
-                    if (m) return m;
-                }
-                else if (pkg.main) {
-                    var m = loadAsFileSync(path.resolve(x, pkg.main));
-                    if (m) return m;
-                }
-            }
-            
-            return loadAsFileSync(x + '/index');
-        }
-        
-        function loadNodeModulesSync (x, start) {
-            var dirs = nodeModulesPathsSync(start);
-            for (var i = 0; i < dirs.length; i++) {
-                var dir = dirs[i];
-                var m = loadAsFileSync(dir + '/' + x);
-                if (m) return m;
-                var n = loadAsDirectorySync(dir + '/' + x);
-                if (n) return n;
-            }
-            
-            var m = loadAsFileSync(x);
-            if (m) return m;
-        }
-        
-        function nodeModulesPathsSync (start) {
-            var parts;
-            if (start === '/') parts = [ '' ];
-            else parts = path.normalize(start).split('/');
-            
-            var dirs = [];
-            for (var i = parts.length - 1; i >= 0; i--) {
-                if (parts[i] === 'node_modules') continue;
-                var dir = parts.slice(0, i + 1).join('/') + '/node_modules';
-                dirs.push(dir);
-            }
-            
-            return dirs;
-        }
-    };
-})();
-
-require.alias = function (from, to) {
-    var path = require.modules.path();
-    var res = null;
-    try {
-        res = require.resolve(from + '/package.json', '/');
-    }
-    catch (err) {
-        res = require.resolve(from, '/');
-    }
-    var basedir = path.dirname(res);
-    
-    var keys = (Object.keys || function (obj) {
-        var res = [];
-        for (var key in obj) res.push(key);
-        return res;
-    })(require.modules);
-    
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        if (key.slice(0, basedir.length + 1) === basedir + '/') {
-            var f = key.slice(basedir.length);
-            require.modules[to + f] = require.modules[basedir + f];
-        }
-        else if (key === basedir) {
-            require.modules[to] = require.modules[basedir];
-        }
-    }
-};
-
-(function () {
-    var process = {};
-    var global = typeof window !== 'undefined' ? window : {};
-    var definedProcess = false;
-    
-    require.define = function (filename, fn) {
-        if (!definedProcess && require.modules.__browserify_process) {
-            process = require.modules.__browserify_process();
-            definedProcess = true;
-        }
-        
-        var dirname = require._core[filename]
-            ? ''
-            : require.modules.path().dirname(filename)
-        ;
-        
-        var require_ = function (file) {
-            var requiredModule = require(file, dirname);
-            var cached = require.cache[require.resolve(file, dirname)];
-
-            if (cached && cached.parent === null) {
-                cached.parent = module_;
-            }
-
-            return requiredModule;
-        };
-        require_.resolve = function (name) {
-            return require.resolve(name, dirname);
-        };
-        require_.modules = require.modules;
-        require_.define = require.define;
-        require_.cache = require.cache;
-        var module_ = {
-            id : filename,
-            filename: filename,
-            exports : {},
-            loaded : false,
-            parent: null
-        };
-        
-        require.modules[filename] = function () {
-            require.cache[filename] = module_;
-            fn.call(
-                module_.exports,
-                require_,
-                module_,
-                module_.exports,
-                dirname,
-                filename,
-                process,
-                global
-            );
-            module_.loaded = true;
-            return module_.exports;
-        };
-    };
-})();
-
-
-require.define("path",function(require,module,exports,__dirname,__filename,process,global){function filter (xs, fn) {
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (fn(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-}
-
-// resolves . and .. elements in a path array with directory names there
-// must be no slashes, empty elements, or device names (c:\) in the array
-// (so also no leading and trailing slashes - it does not distinguish
-// relative and absolute paths)
-function normalizeArray(parts, allowAboveRoot) {
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = parts.length; i >= 0; i--) {
-    var last = parts[i];
-    if (last == '.') {
-      parts.splice(i, 1);
-    } else if (last === '..') {
-      parts.splice(i, 1);
-      up++;
-    } else if (up) {
-      parts.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (allowAboveRoot) {
-    for (; up--; up) {
-      parts.unshift('..');
-    }
-  }
-
-  return parts;
-}
-
-// Regex to split a filename into [*, dir, basename, ext]
-// posix version
-var splitPathRe = /^(.+\/(?!$)|\/)?((?:.+?)?(\.[^.]*)?)$/;
-
-// path.resolve([from ...], to)
-// posix version
-exports.resolve = function() {
-var resolvedPath = '',
-    resolvedAbsolute = false;
-
-for (var i = arguments.length; i >= -1 && !resolvedAbsolute; i--) {
-  var path = (i >= 0)
-      ? arguments[i]
-      : process.cwd();
-
-  // Skip empty and invalid entries
-  if (typeof path !== 'string' || !path) {
-    continue;
-  }
-
-  resolvedPath = path + '/' + resolvedPath;
-  resolvedAbsolute = path.charAt(0) === '/';
-}
-
-// At this point the path should be resolved to a full absolute path, but
-// handle relative paths to be safe (might happen when process.cwd() fails)
-
-// Normalize the path
-resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
-    return !!p;
-  }), !resolvedAbsolute).join('/');
-
-  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
-};
-
-// path.normalize(path)
-// posix version
-exports.normalize = function(path) {
-var isAbsolute = path.charAt(0) === '/',
-    trailingSlash = path.slice(-1) === '/';
-
-// Normalize the path
-path = normalizeArray(filter(path.split('/'), function(p) {
-    return !!p;
-  }), !isAbsolute).join('/');
-
-  if (!path && !isAbsolute) {
-    path = '.';
-  }
-  if (path && trailingSlash) {
-    path += '/';
-  }
-  
-  return (isAbsolute ? '/' : '') + path;
-};
-
-
-// posix version
-exports.join = function() {
-  var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    return p && typeof p === 'string';
-  }).join('/'));
-};
-
-
-exports.dirname = function(path) {
-  var dir = splitPathRe.exec(path)[1] || '';
-  var isWindows = false;
-  if (!dir) {
-    // No dirname
-    return '.';
-  } else if (dir.length === 1 ||
-      (isWindows && dir.length <= 3 && dir.charAt(1) === ':')) {
-    // It is just a slash or a drive letter with a slash
-    return dir;
-  } else {
-    // It is a full dirname, strip trailing slash
-    return dir.substring(0, dir.length - 1);
-  }
-};
-
-
-exports.basename = function(path, ext) {
-  var f = splitPathRe.exec(path)[2] || '';
-  // TODO: make this comparison case-insensitive on windows?
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
-  }
-  return f;
-};
-
-
-exports.extname = function(path) {
-  return splitPathRe.exec(path)[3] || '';
-};
-
-});
-
-require.define("__browserify_process",function(require,module,exports,__dirname,__filename,process,global){var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-        && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-        && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            if (ev.source === window && ev.data === 'browserify-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('browserify-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-process.binding = function (name) {
-    if (name === 'evals') return (require)('vm')
-    else throw new Error('No such module. (Possibly not yet loaded)')
-};
-
-(function () {
-    var cwd = '/';
-    var path;
-    process.cwd = function () { return cwd };
-    process.chdir = function (dir) {
-        if (!path) path = require('path');
-        cwd = path.resolve(dir, cwd);
-    };
-})();
-
-});
-
-require.define("/angleUtils.js",function(require,module,exports,__dirname,__filename,process,global){/**
- *  Converts angles in degrees, which are used by the external API, to angles
- *  in radians used in internal calculations.
- *  @param {number} angle - An angle in degrees.
- *  @returns {number} radians
- */
-function deg2rad(angle) {
-    return angle * Math.PI / 180;
-}
-
-function rad2deg(radians) {
-    return radians * (180 / Math.PI);
-}
-
-function grad2deg(gradians) {
-    // 400 gradians in 360 degrees
-    return gradians / (400 / 360);
-}
-
-module.exports = {
-  deg2rad: deg2rad,
-  rad2deg: rad2deg,
-  grad2deg: grad2deg
-};
-
-});
-
-require.define("/matrixUtils.js",function(require,module,exports,__dirname,__filename,process,global){/**
- *  Calculates the determinant of a 2x2 matrix.
- *  @param {number} a - Top-left value of the matrix.
- *  @param {number} b - Top-right value of the matrix.
- *  @param {number} c - Bottom-left value of the matrix.
- *  @param {number} d - Bottom-right value of the matrix.
- *  @returns {number}
- */
-function determinant2x2(a, b, c, d) {
-    return a * d - b * c;
-}
-
-/**
- *  Calculates the determinant of a 3x3 matrix.
- *  @param {number} a1 - Matrix value in position [1, 1].
- *  @param {number} a2 - Matrix value in position [1, 2].
- *  @param {number} a3 - Matrix value in position [1, 3].
- *  @param {number} b1 - Matrix value in position [2, 1].
- *  @param {number} b2 - Matrix value in position [2, 2].
- *  @param {number} b3 - Matrix value in position [2, 3].
- *  @param {number} c1 - Matrix value in position [3, 1].
- *  @param {number} c2 - Matrix value in position [3, 2].
- *  @param {number} c3 - Matrix value in position [3, 3].
- *  @returns {number}
- */
-function determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) {
-
-    return a1 * determinant2x2(b2, b3, c2, c3) -
-           b1 * determinant2x2(a2, a3, c2, c3) +
-           c1 * determinant2x2(a2, a3, b2, b3);
-}
-
-/**
- *  Calculates the determinant of a 4x4 matrix.
- *  @param {XCSSMatrix} matrix - The matrix to calculate the determinant of.
- *  @returns {number}
- */
-function determinant4x4(matrix) {
-    var
-        m = matrix,
-        // Assign to individual variable names to aid selecting correct elements
-        a1 = m.m11, b1 = m.m21, c1 = m.m31, d1 = m.m41,
-        a2 = m.m12, b2 = m.m22, c2 = m.m32, d2 = m.m42,
-        a3 = m.m13, b3 = m.m23, c3 = m.m33, d3 = m.m43,
-        a4 = m.m14, b4 = m.m24, c4 = m.m34, d4 = m.m44;
-
-    return a1 * determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4) -
-           b1 * determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4) +
-           c1 * determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4) -
-           d1 * determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
-}
-
-/**
- *  Determines whether the matrix is affine.
- *  @returns {boolean}
- */
-function isAffine(matrix) {
-    return matrix.m13 === 0 && matrix.m14 === 0 &&
-           matrix.m23 === 0 && matrix.m24 === 0 &&
-           matrix.m31 === 0 && matrix.m32 === 0 &&
-           matrix.m33 === 1 && matrix.m34 === 0 &&
-           matrix.m43 === 0 && matrix.m44 === 1;
-}
-
-/**
- *  Returns whether the matrix is the identity matrix or a translation matrix.
- *  @return {boolean}
- */
-function isIdentityOrTranslation(matrix) {
-    var m = matrix;
-
-    return m.m11 === 1 && m.m12 === 0 && m.m13 === 0 && m.m14 === 0 &&
-           m.m21 === 0 && m.m22 === 1 && m.m23 === 0 && m.m24 === 0 &&
-           m.m31 === 0 && m.m31 === 0 && m.m33 === 1 && m.m34 === 0 &&
-    /* m41, m42 and m43 are the translation points */   m.m44 === 1;
-}
-
-/**
- *  Returns the adjoint matrix.
- *  @return {XCSSMatrix}
- */
-function adjoint(matrix) {
-    var m = matrix,
-        // make `result` the same type as the given metric
-        result = new matrix.constructor(),
-
-        a1 = m.m11, b1 = m.m12, c1 = m.m13, d1 = m.m14,
-        a2 = m.m21, b2 = m.m22, c2 = m.m23, d2 = m.m24,
-        a3 = m.m31, b3 = m.m32, c3 = m.m33, d3 = m.m34,
-        a4 = m.m41, b4 = m.m42, c4 = m.m43, d4 = m.m44;
-
-    // Row column labeling reversed since we transpose rows & columns
-    result.m11 =  determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4);
-    result.m21 = -determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4);
-    result.m31 =  determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4);
-    result.m41 = -determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
-
-    result.m12 = -determinant3x3(b1, b3, b4, c1, c3, c4, d1, d3, d4);
-    result.m22 =  determinant3x3(a1, a3, a4, c1, c3, c4, d1, d3, d4);
-    result.m32 = -determinant3x3(a1, a3, a4, b1, b3, b4, d1, d3, d4);
-    result.m42 =  determinant3x3(a1, a3, a4, b1, b3, b4, c1, c3, c4);
-
-    result.m13 =  determinant3x3(b1, b2, b4, c1, c2, c4, d1, d2, d4);
-    result.m23 = -determinant3x3(a1, a2, a4, c1, c2, c4, d1, d2, d4);
-    result.m33 =  determinant3x3(a1, a2, a4, b1, b2, b4, d1, d2, d4);
-    result.m43 = -determinant3x3(a1, a2, a4, b1, b2, b4, c1, c2, c4);
-
-    result.m14 = -determinant3x3(b1, b2, b3, c1, c2, c3, d1, d2, d3);
-    result.m24 =  determinant3x3(a1, a2, a3, c1, c2, c3, d1, d2, d3);
-    result.m34 = -determinant3x3(a1, a2, a3, b1, b2, b3, d1, d2, d3);
-    result.m44 =  determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3);
-
-    return result;
-}
-
-module.exports = {
-  determinant2x2: determinant2x2,
-  determinant3x3: determinant3x3,
-  determinant4x4: determinant4x4,
-  isAffine: isAffine,
-  isIdentityOrTranslation: isIdentityOrTranslation,
-  adjoint: adjoint
-};
-
-});
-
-require.define("/cssTransformStringUtils.js",function(require,module,exports,__dirname,__filename,process,global){var utils = {
-    angles: require('./angleUtils')
-};
-
-function valueToObject(value) {
-    var units = /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/;
-    var parts = value.match(units) || [];
-
-    return {
-        value: parseFloat(parts[1]),
-        units: parts[2],
-        unparsed: value
-    };
-}
-
-function statementToObject(statement, skipValues) {
-    var nameAndArgs    = /(\w+)\(([^\)]+)\)/i;
-    var statementParts = statement.toString().match(nameAndArgs).slice(1);
-    var functionName   = statementParts[0];
-    var stringValues   = statementParts[1].split(/, ?/);
-    var parsedValues   = !skipValues && stringValues.map(valueToObject);
-
-    return {
-        key: functionName,
-        value: parsedValues || stringValues,
-        unparsed: statement
-    };
-}
-
-function stringToStatements(transformString) {
-    var functionSignature   = /(\w+)\([^\)]+\)/ig;
-    var transformStatements = transformString.match(functionSignature) || [];
-
-    return transformStatements;
-}
-
-module.exports = {
-    matrixFn2d: 'matrix',
-    matrixFn3d: 'matrix3d',
-    valueToObject: valueToObject,
-    statementToObject: statementToObject,
-    stringToStatements: stringToStatements
-};
-
-});
-
-require.define("/XCSSMatrix.js",function(require,module,exports,__dirname,__filename,process,global){var utils = {
-    angles: require('./angleUtils'),
-    matrix: require('./matrixUtils'),
-    transp: require('./cssTransformStringUtils'),
+;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
+var XCSSMatrix = require('./lib/XCSSMatrix.js');
+module.exports = window.XCSSMatrix = XCSSMatrix;
+
+},{"./lib/XCSSMatrix.js":2}],2:[function(require,module,exports){
+var utils = {
+    angles: require('./utils/angle'),
+    matrix: require('./utils/matrix'),
+    transp: require('./utils/cssTransformString'),
     funcs: {
         // Given a function `fn`, return a function which calls `fn` with only 1
         //   argument, no matter how many are given.
@@ -685,8 +98,8 @@ var points3d = [
         get: function () {
             return this[key3d];
         },
-        enumerable: true,
-        configurable: true
+        enumerable : true,
+        configurable : true
     });
 });
 
@@ -698,33 +111,7 @@ var points3d = [
  *  @param {XCSSMatrix} otherMatrix - The matrix to multiply this one by.
  */
 XCSSMatrix.prototype.multiply = function (otherMatrix) {
-    if (!otherMatrix) return null;
-
-    var a = otherMatrix,
-        b = this,
-        c = new XCSSMatrix();
-
-    c.m11 = a.m11 * b.m11 + a.m12 * b.m21 + a.m13 * b.m31 + a.m14 * b.m41;
-    c.m12 = a.m11 * b.m12 + a.m12 * b.m22 + a.m13 * b.m32 + a.m14 * b.m42;
-    c.m13 = a.m11 * b.m13 + a.m12 * b.m23 + a.m13 * b.m33 + a.m14 * b.m43;
-    c.m14 = a.m11 * b.m14 + a.m12 * b.m24 + a.m13 * b.m34 + a.m14 * b.m44;
-
-    c.m21 = a.m21 * b.m11 + a.m22 * b.m21 + a.m23 * b.m31 + a.m24 * b.m41;
-    c.m22 = a.m21 * b.m12 + a.m22 * b.m22 + a.m23 * b.m32 + a.m24 * b.m42;
-    c.m23 = a.m21 * b.m13 + a.m22 * b.m23 + a.m23 * b.m33 + a.m24 * b.m43;
-    c.m24 = a.m21 * b.m14 + a.m22 * b.m24 + a.m23 * b.m34 + a.m24 * b.m44;
-
-    c.m31 = a.m31 * b.m11 + a.m32 * b.m21 + a.m33 * b.m31 + a.m34 * b.m41;
-    c.m32 = a.m31 * b.m12 + a.m32 * b.m22 + a.m33 * b.m32 + a.m34 * b.m42;
-    c.m33 = a.m31 * b.m13 + a.m32 * b.m23 + a.m33 * b.m33 + a.m34 * b.m43;
-    c.m34 = a.m31 * b.m14 + a.m32 * b.m24 + a.m33 * b.m34 + a.m34 * b.m44;
-
-    c.m41 = a.m41 * b.m11 + a.m42 * b.m21 + a.m43 * b.m31 + a.m44 * b.m41;
-    c.m42 = a.m41 * b.m12 + a.m42 * b.m22 + a.m43 * b.m32 + a.m44 * b.m42;
-    c.m43 = a.m41 * b.m13 + a.m42 * b.m23 + a.m43 * b.m33 + a.m44 * b.m43;
-    c.m44 = a.m41 * b.m14 + a.m42 * b.m24 + a.m43 * b.m34 + a.m44 * b.m44;
-
-    return c;
+    return utils.matrix.multiply(this, otherMatrix);
 };
 
 /**
@@ -734,37 +121,7 @@ XCSSMatrix.prototype.multiply = function (otherMatrix) {
  *  @returns {XCSSMatrix|null}
  */
 XCSSMatrix.prototype.inverse = function () {
-    var inv;
-
-    if (utils.matrix.isIdentityOrTranslation(this)) {
-        inv = new XCSSMatrix();
-
-        if (!(this.m41 === 0 && this.m42 === 0 && this.m43 === 0)) {
-            inv.m41 = -this.m41;
-            inv.m42 = -this.m42;
-            inv.m43 = -this.m43;
-        }
-
-        return inv;
-    }
-
-    // Calculate the adjoint matrix
-    var result = utils.matrix.adjoint(this);
-
-    // Calculate the 4x4 determinant
-    var det = utils.matrix.determinant4x4(this);
-
-    // If the determinant is zero, then the inverse matrix is not unique
-    if (Math.abs(det) < 1e-8) return null;
-
-    // Scale the adjoint matrix to get the inverse
-    for (var i = 1; i < 5; i++) {
-        for (var j = 1; j < 5; j++) {
-            result[('m' + i) + j] /= det;
-        }
-    }
-
-    return result;
+    return utils.matrix.inverse(this);
 };
 
 /**
@@ -800,33 +157,33 @@ XCSSMatrix.prototype.rotate = function (rx, ry, rz) {
     var tx = new XCSSMatrix(),
         ty = new XCSSMatrix(),
         tz = new XCSSMatrix(),
-        sinA, cosA, sinA2;
+        sinA, cosA, sq;
 
     rz /= 2;
     sinA  = Math.sin(rz);
     cosA  = Math.cos(rz);
-    sinA2 = sinA * sinA;
+    sq = sinA * sinA;
 
     // Matrices are identity outside the assigned values
-    tz.m11 = tz.m22 = 1 - 2 * sinA2;
+    tz.m11 = tz.m22 = 1 - 2 * sq;
     tz.m12 = tz.m21 = 2 * sinA * cosA;
     tz.m21 *= -1;
 
     ry /= 2;
     sinA  = Math.sin(ry);
     cosA  = Math.cos(ry);
-    sinA2 = sinA * sinA;
+    sq = sinA * sinA;
 
-    ty.m11 = ty.m33 = 1 - 2 * sinA2;
+    ty.m11 = ty.m33 = 1 - 2 * sq;
     ty.m13 = ty.m31 = 2 * sinA * cosA;
     ty.m13 *= -1;
 
     rx /= 2;
     sinA = Math.sin(rx);
     cosA = Math.cos(rx);
-    sinA2 = sinA * sinA;
+    sq = sinA * sinA;
 
-    tx.m22 = tx.m33 = 1 - 2 * sinA2;
+    tx.m22 = tx.m33 = 1 - 2 * sq;
     tx.m23 = tx.m32 = 2 * sinA * cosA;
     tx.m32 *= -1;
 
@@ -859,15 +216,15 @@ XCSSMatrix.prototype.rotateAxisAngle = function (x, y, z, a) {
     if (typeof z !== 'number' || isNaN(z)) z = 0;
     if (typeof a !== 'number' || isNaN(a)) a = 0;
     if (x === 0 && y === 0 && z === 0) z = 1;
-
-    var t   = new XCSSMatrix(),
-        len = Math.sqrt(x * x + y * y + z * z),
-        cosA, sinA, sinA2, csA, x2, y2, z2;
-
-    a     = (utils.angles.deg2rad(a) || 0) / 2;
-    cosA  = Math.cos(a);
-    sinA  = Math.sin(a);
-    sinA2 = sinA * sinA;
+    a = (utils.angles.deg2rad(a) || 0) / 2;
+    var t         = new XCSSMatrix(),
+        len       = Math.sqrt(x * x + y * y + z * z),
+        cosA      = Math.cos(a),
+        sinA      = Math.sin(a),
+        sq        = sinA * sinA,
+        sc        = sinA * cosA,
+        precision = function(v) { return parseFloat((v).toFixed(6)); },
+        x2, y2, z2;
 
     // Bad vector, use something sensible
     if (len === 0) {
@@ -882,32 +239,31 @@ XCSSMatrix.prototype.rotateAxisAngle = function (x, y, z, a) {
 
     // Optimise cases where axis is along major axis
     if (x === 1 && y === 0 && z === 0) {
-        t.m22 = t.m33 = 1 - 2 * sinA2;
-        t.m23 = t.m32 = 2 * cosA * sinA;
+        t.m22 = t.m33 = 1 - 2 * sq;
+        t.m23 = t.m32 = 2 * sc;
         t.m32 *= -1;
     } else if (x === 0 && y === 1 && z === 0) {
-        t.m11 = t.m33 = 1 - 2 * sinA2;
-        t.m13 = t.m31 = 2 * cosA * sinA;
+        t.m11 = t.m33 = 1 - 2 * sq;
+        t.m13 = t.m31 = 2 * sc;
         t.m13 *= -1;
     } else if (x === 0 && y === 0 && z === 1) {
-        t.m11 = t.m22 = 1 - 2 * sinA2;
-        t.m12 = t.m21 = 2 * cosA * sinA;
+        t.m11 = t.m22 = 1 - 2 * sq;
+        t.m12 = t.m21 = 2 * sc;
         t.m21 *= -1;
     } else {
-        csA = sinA * cosA;
         x2  = x * x;
         y2  = y * y;
         z2  = z * z;
-
-        t.m11 = 1 - 2 * (y2 + z2) * sinA2;
-        t.m12 = 2 * (x * y * sinA2 + z * csA);
-        t.m13 = 2 * (x * z * sinA2 - y * csA);
-        t.m21 = 2 * (y * x * sinA2 - z * csA);
-        t.m22 = 1 - 2 * (z2 + x2) * sinA2;
-        t.m23 = 2 * (y * z * sinA2 + x * csA);
-        t.m31 = 2 * (z * x * sinA2 + y * csA);
-        t.m32 = 2 * (z * y * sinA2 - x * csA);
-        t.m33 = 1 - 2 * (x2 + y2) * sinA2;
+        // http://dev.w3.org/csswg/css-transforms/#mathematical-description
+        t.m11 = precision(1 - 2 * (y2 + z2) * sq);
+        t.m12 = precision(2 * (x * y * sq + z * sc));
+        t.m13 = precision(2 * (x * z * sq - y * sc));
+        t.m21 = precision(2 * (x * y * sq - z * sc));
+        t.m22 = precision(1 - 2 * (x2 + z2) * sq);
+        t.m23 = precision(2 * (y * z * sq + x * sc));
+        t.m31 = precision(2 * (x * z * sq + y * sc));
+        t.m32 = precision(2 * (y * z * sq - x * sc));
+        t.m33 = precision(1 - 2 * (x2 + y2) * sq);
     }
 
     return this.multiply(t);
@@ -1053,6 +409,9 @@ XCSSMatrix.prototype.toString = function () {
         ')';
 };
 
+XCSSMatrix.prototype.decompose = function () {
+    return utils.matrix.decompose(this);
+};
 
 // ====== toMatrixString ====== //
 var jsFunctions = {
@@ -1108,7 +467,7 @@ var jsFunctions = {
 
     skew: function (m, o) {
         var mX = new XCSSMatrix('skewX(' + o.value[0].unparsed + ')');
-        var mY = new XCSSMatrix("skewY(" + (o.value[1]&&o.value[1].unparsed || 0) + ")");
+        var mY = new XCSSMatrix('skewY(' + (o.value[1]&&o.value[1].unparsed || 0) + ')');
         var sM = 'matrix(1.00000, '+ mY.b +', '+ mX.c +', 1.000000, 0.000000, 0.000000)';
         var m2 = new XCSSMatrix(sM);
 
@@ -1198,5 +557,606 @@ function toMatrixString(transformString) {
 
 module.exports = XCSSMatrix;
 
-});
-require("/XCSSMatrix.js");
+},{"./utils/angle":3,"./utils/matrix":4,"./utils/cssTransformString":5}],3:[function(require,module,exports){
+module.exports = {
+  deg2rad: deg2rad,
+  rad2deg: rad2deg,
+  grad2deg: grad2deg
+};
+
+/**
+ *  Converts angles in degrees, which are used by the external API, to angles
+ *  in radians used in internal calculations.
+ *  @param {number} angle - An angle in degrees.
+ *  @returns {number} radians
+ */
+function deg2rad(angle) {
+    return angle * Math.PI / 180;
+}
+
+function rad2deg(radians) {
+    return radians * (180 / Math.PI);
+}
+
+function grad2deg(gradians) {
+    // 400 gradians in 360 degrees
+    return gradians / (400 / 360);
+}
+
+},{}],5:[function(require,module,exports){
+module.exports = {
+    matrixFn2d: 'matrix',
+    matrixFn3d: 'matrix3d',
+    valueToObject: valueToObject,
+    statementToObject: statementToObject,
+    stringToStatements: stringToStatements
+};
+
+function valueToObject(value) {
+    var units = /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/;
+    var parts = value.match(units) || [];
+
+    return {
+        value: parseFloat(parts[1]),
+        units: parts[2],
+        unparsed: value
+    };
+}
+
+function statementToObject(statement, skipValues) {
+    var nameAndArgs    = /(\w+)\(([^\)]+)\)/i;
+    var statementParts = statement.toString().match(nameAndArgs).slice(1);
+    var functionName   = statementParts[0];
+    var stringValues   = statementParts[1].split(/, ?/);
+    var parsedValues   = !skipValues && stringValues.map(valueToObject);
+
+    return {
+        key: functionName,
+        value: parsedValues || stringValues,
+        unparsed: statement
+    };
+}
+
+function stringToStatements(transformString) {
+    var functionSignature   = /(\w+)\([^\)]+\)/ig;
+    var transformStatements = transformString.match(functionSignature) || [];
+
+    return transformStatements;
+}
+
+},{}],4:[function(require,module,exports){
+module.exports = {
+  determinant2x2: determinant2x2,
+  determinant3x3: determinant3x3,
+  determinant4x4: determinant4x4,
+  isAffine: isAffine,
+  isIdentityOrTranslation: isIdentityOrTranslation,
+  adjoint: adjoint,
+  inverse: inverse,
+  multiply: multiply,
+  decompose: decompose
+};
+
+/**
+ *  Calculates the determinant of a 2x2 matrix.
+ *  @param {number} a - Top-left value of the matrix.
+ *  @param {number} b - Top-right value of the matrix.
+ *  @param {number} c - Bottom-left value of the matrix.
+ *  @param {number} d - Bottom-right value of the matrix.
+ *  @returns {number}
+ */
+function determinant2x2(a, b, c, d) {
+    return a * d - b * c;
+}
+
+/**
+ *  Calculates the determinant of a 3x3 matrix.
+ *  @param {number} a1 - Matrix value in position [1, 1].
+ *  @param {number} a2 - Matrix value in position [1, 2].
+ *  @param {number} a3 - Matrix value in position [1, 3].
+ *  @param {number} b1 - Matrix value in position [2, 1].
+ *  @param {number} b2 - Matrix value in position [2, 2].
+ *  @param {number} b3 - Matrix value in position [2, 3].
+ *  @param {number} c1 - Matrix value in position [3, 1].
+ *  @param {number} c2 - Matrix value in position [3, 2].
+ *  @param {number} c3 - Matrix value in position [3, 3].
+ *  @returns {number}
+ */
+function determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3) {
+
+    return a1 * determinant2x2(b2, b3, c2, c3) -
+           b1 * determinant2x2(a2, a3, c2, c3) +
+           c1 * determinant2x2(a2, a3, b2, b3);
+}
+
+/**
+ *  Calculates the determinant of a 4x4 matrix.
+ *  @param {XCSSMatrix} matrix - The matrix to calculate the determinant of.
+ *  @returns {number}
+ */
+function determinant4x4(matrix) {
+    var
+        m = matrix,
+        // Assign to individual variable names to aid selecting correct elements
+        a1 = m.m11, b1 = m.m21, c1 = m.m31, d1 = m.m41,
+        a2 = m.m12, b2 = m.m22, c2 = m.m32, d2 = m.m42,
+        a3 = m.m13, b3 = m.m23, c3 = m.m33, d3 = m.m43,
+        a4 = m.m14, b4 = m.m24, c4 = m.m34, d4 = m.m44;
+
+    return a1 * determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4) -
+           b1 * determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4) +
+           c1 * determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4) -
+           d1 * determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
+}
+
+/**
+ *  Determines whether the matrix is affine.
+ *  @returns {boolean}
+ */
+function isAffine(matrix) {
+    return matrix.m13 === 0 && matrix.m14 === 0 &&
+           matrix.m23 === 0 && matrix.m24 === 0 &&
+           matrix.m31 === 0 && matrix.m32 === 0 &&
+           matrix.m33 === 1 && matrix.m34 === 0 &&
+           matrix.m43 === 0 && matrix.m44 === 1;
+}
+
+/**
+ *  Returns whether the matrix is the identity matrix or a translation matrix.
+ *  @return {boolean}
+ */
+function isIdentityOrTranslation(matrix) {
+    var m = matrix;
+
+    return m.m11 === 1 && m.m12 === 0 && m.m13 === 0 && m.m14 === 0 &&
+           m.m21 === 0 && m.m22 === 1 && m.m23 === 0 && m.m24 === 0 &&
+           m.m31 === 0 && m.m31 === 0 && m.m33 === 1 && m.m34 === 0 &&
+    /* m41, m42 and m43 are the translation points */   m.m44 === 1;
+}
+
+/**
+ *  Returns the adjoint matrix.
+ *  @return {XCSSMatrix}
+ */
+function adjoint(matrix) {
+    var m = matrix,
+        // make `result` the same type as the given metric
+        result = new matrix.constructor(),
+
+        a1 = m.m11, b1 = m.m12, c1 = m.m13, d1 = m.m14,
+        a2 = m.m21, b2 = m.m22, c2 = m.m23, d2 = m.m24,
+        a3 = m.m31, b3 = m.m32, c3 = m.m33, d3 = m.m34,
+        a4 = m.m41, b4 = m.m42, c4 = m.m43, d4 = m.m44;
+
+    // Row column labeling reversed since we transpose rows & columns
+    result.m11 =  determinant3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4);
+    result.m21 = -determinant3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4);
+    result.m31 =  determinant3x3(a2, a3, a4, b2, b3, b4, d2, d3, d4);
+    result.m41 = -determinant3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4);
+
+    result.m12 = -determinant3x3(b1, b3, b4, c1, c3, c4, d1, d3, d4);
+    result.m22 =  determinant3x3(a1, a3, a4, c1, c3, c4, d1, d3, d4);
+    result.m32 = -determinant3x3(a1, a3, a4, b1, b3, b4, d1, d3, d4);
+    result.m42 =  determinant3x3(a1, a3, a4, b1, b3, b4, c1, c3, c4);
+
+    result.m13 =  determinant3x3(b1, b2, b4, c1, c2, c4, d1, d2, d4);
+    result.m23 = -determinant3x3(a1, a2, a4, c1, c2, c4, d1, d2, d4);
+    result.m33 =  determinant3x3(a1, a2, a4, b1, b2, b4, d1, d2, d4);
+    result.m43 = -determinant3x3(a1, a2, a4, b1, b2, b4, c1, c2, c4);
+
+    result.m14 = -determinant3x3(b1, b2, b3, c1, c2, c3, d1, d2, d3);
+    result.m24 =  determinant3x3(a1, a2, a3, c1, c2, c3, d1, d2, d3);
+    result.m34 = -determinant3x3(a1, a2, a3, b1, b2, b3, d1, d2, d3);
+    result.m44 =  determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3);
+
+    return result;
+}
+
+function inverse(matrix) {
+  var inv;
+
+  if (isIdentityOrTranslation(matrix)) {
+      inv = new matrix.constructor();
+
+      if (!(matrix.m41 === 0 && matrix.m42 === 0 && matrix.m43 === 0)) {
+          inv.m41 = -matrix.m41;
+          inv.m42 = -matrix.m42;
+          inv.m43 = -matrix.m43;
+      }
+
+      return inv;
+  }
+
+  // Calculate the adjoint matrix
+  var result = adjoint(matrix);
+
+  // Calculate the 4x4 determinant
+  var det = determinant4x4(matrix);
+
+  // If the determinant is zero, then the inverse matrix is not unique
+  if (Math.abs(det) < 1e-8) return null;
+
+  // Scale the adjoint matrix to get the inverse
+  for (var i = 1; i < 5; i++) {
+      for (var j = 1; j < 5; j++) {
+          result[('m' + i) + j] /= det;
+      }
+  }
+
+  return result;
+}
+
+function multiply(matrix, otherMatrix) {
+  if (!otherMatrix) return null;
+
+  var a = otherMatrix,
+      b = matrix,
+      c = new matrix.constructor();
+
+  c.m11 = a.m11 * b.m11 + a.m12 * b.m21 + a.m13 * b.m31 + a.m14 * b.m41;
+  c.m12 = a.m11 * b.m12 + a.m12 * b.m22 + a.m13 * b.m32 + a.m14 * b.m42;
+  c.m13 = a.m11 * b.m13 + a.m12 * b.m23 + a.m13 * b.m33 + a.m14 * b.m43;
+  c.m14 = a.m11 * b.m14 + a.m12 * b.m24 + a.m13 * b.m34 + a.m14 * b.m44;
+
+  c.m21 = a.m21 * b.m11 + a.m22 * b.m21 + a.m23 * b.m31 + a.m24 * b.m41;
+  c.m22 = a.m21 * b.m12 + a.m22 * b.m22 + a.m23 * b.m32 + a.m24 * b.m42;
+  c.m23 = a.m21 * b.m13 + a.m22 * b.m23 + a.m23 * b.m33 + a.m24 * b.m43;
+  c.m24 = a.m21 * b.m14 + a.m22 * b.m24 + a.m23 * b.m34 + a.m24 * b.m44;
+
+  c.m31 = a.m31 * b.m11 + a.m32 * b.m21 + a.m33 * b.m31 + a.m34 * b.m41;
+  c.m32 = a.m31 * b.m12 + a.m32 * b.m22 + a.m33 * b.m32 + a.m34 * b.m42;
+  c.m33 = a.m31 * b.m13 + a.m32 * b.m23 + a.m33 * b.m33 + a.m34 * b.m43;
+  c.m34 = a.m31 * b.m14 + a.m32 * b.m24 + a.m33 * b.m34 + a.m34 * b.m44;
+
+  c.m41 = a.m41 * b.m11 + a.m42 * b.m21 + a.m43 * b.m31 + a.m44 * b.m41;
+  c.m42 = a.m41 * b.m12 + a.m42 * b.m22 + a.m43 * b.m32 + a.m44 * b.m42;
+  c.m43 = a.m41 * b.m13 + a.m42 * b.m23 + a.m43 * b.m33 + a.m44 * b.m43;
+  c.m44 = a.m41 * b.m14 + a.m42 * b.m24 + a.m43 * b.m34 + a.m44 * b.m44;
+
+  return c;
+}
+
+function transpose(matrix) {
+  var result = new matrix.constructor();
+  var rows = 4, cols = 4;
+  var i = cols, j;
+  while (i) {
+    j = rows;
+    while (j) {
+      result['m' + i + j] = matrix['m'+ j + i];
+      j--;
+    }
+    i--;
+  }
+  return result;
+}
+
+/*
+  Input:  matrix      ; a 4x4 matrix
+  Output: translation ; a 3 component vector
+          scale       ; a 3 component vector
+          skew        ; skew factors XY,XZ,YZ represented as a 3 component vector
+          perspective ; a 4 component vector
+          rotate  ; a 4 component vector
+  Returns false if the matrix cannot be decomposed, true if it can
+*/
+var Vector4 = require('../Vector4.js');
+function decompose(matrix) {
+  var perspectiveMatrix, rightHandSide, inversePerspectiveMatrix, transposedInversePerspectiveMatrix,
+      perspective, translate, row, i, len, scale, skew, pdum3, rotate;
+
+  // Normalize the matrix.
+  if (matrix.m33 == 0) { return false; }
+
+  for (i = 1; i <= 4; i++) {
+    for (j = 1; j < 4; j++) {
+      matrix['m'+i+j] /= matrix.m44;
+    }
+  }
+
+  // perspectiveMatrix is used to solve for perspective, but it also provides
+  // an easy way to test for singularity of the upper 3x3 component.
+  perspectiveMatrix = matrix;
+  perspectiveMatrix.m14 = 0;
+  perspectiveMatrix.m24 = 0;
+  perspectiveMatrix.m34 = 0;
+  perspectiveMatrix.m44 = 1;
+
+  if (determinant4x4(perspectiveMatrix) == 0) {
+    return false;
+  }
+
+  // First, isolate perspective.
+  if (matrix.m14 != 0 || matrix.m24 != 0 || matrix.m34 != 0) {
+    // rightHandSide is the right hand side of the equation.
+    rightHandSide = new Vector4(matrix.m14, matrix.m24, matrix.m34, matrix.m44);
+
+    // Solve the equation by inverting perspectiveMatrix and multiplying
+    // rightHandSide by the inverse.
+    inversePerspectiveMatrix = inverse(perspectiveMatrix);
+    transposedInversePerspectiveMatrix = transpose(inversePerspectiveMatrix);
+    perspective = rightHandSide.multiplyByMatrix(transposedInversePerspectiveMatrix);
+  }
+  else {
+    // No perspective.
+    perspective = new Vector4(0, 0, 0, 1);
+  }
+
+  // Next take care of translation
+  translate = new Vector4(matrix.m41, matrix.m42, matrix.m43);
+
+  // Now get scale and shear. 'row' is a 3 element array of 3 component vectors
+  row = [ new Vector4(), new Vector4(), new Vector4() ];
+  for (i = 1, len = row.length; i < len; i++) {
+    row[i-1].x = matrix['m'+i+'1'];
+    row[i-1].y = matrix['m'+i+'2'];
+    row[i-1].z = matrix['m'+i+'3'];
+  }
+
+  // Compute X scale factor and normalize first row.
+  scale = new Vector4();
+  skew = new Vector4();
+
+  scale.x = row[0].length();
+  row[0] = row[0].normalize();
+
+  // Compute XY shear factor and make 2nd row orthogonal to 1st.
+  skew.x = row[0].dot(row[1]);
+  row[1] = row[1].combine(row[0], 1.0, -skew.x);
+
+  // Now, compute Y scale and normalize 2nd row.
+  scale.y = row[1].length();
+  row[1] = row[1].normalize();
+  skew.x /= scale.y;
+
+  // Compute XZ and YZ shears, orthogonalize 3rd row
+  skew.y = row[0].dot(row[2]);
+  row[2] = row[2].combine(row[0], 1.0, -skew.y);
+  skew.z = row[1].dot(row[2]);
+  row[2] = row[2].combine(row[1], 1.0, -skew.z);
+
+  // Next, get Z scale and normalize 3rd row.
+  scale.z = row[2].length();
+  row[2] = row[2].normalize();
+  skew.y = (skew.y / scale.z) || 0;
+  skew.z = (skew.z / scale.z) || 0;
+
+  // At this point, the matrix (in rows) is orthonormal.
+  // Check for a coordinate system flip.  If the determinant
+  // is -1, then negate the matrix and the scaling factors.
+  pdum3 = row[1].cross(row[2]);
+  if (row[0].dot(pdum3) < 0) {
+    for (i = 0; i < 3; i++) {
+      scale.x *= -1;
+      row[i].x *= -1;
+      row[i].y *= -1;
+      row[i].z *= -1;
+    }
+  }
+
+  // Now, get the rotations out
+  // FROM W3C
+  rotate = new Vector4();
+  rotate.x = 0.5 * Math.sqrt(Math.max(1 + row[0].x - row[1].y - row[2].z, 0));
+  rotate.y = 0.5 * Math.sqrt(Math.max(1 - row[0].x + row[1].y - row[2].z, 0));
+  rotate.z = 0.5 * Math.sqrt(Math.max(1 - row[0].x - row[1].y + row[2].z, 0));
+  rotate.w = 0.5 * Math.sqrt(Math.max(1 + row[0].x + row[1].y + row[2].z, 0));
+
+  // if (row[2].y > row[1].z) rotate[0] = -rotate[0];
+  // if (row[0].z > row[2].x) rotate[1] = -rotate[1];
+  // if (row[1].x > row[0].y) rotate[2] = -rotate[2];
+
+  // FROM MORF.JS
+  rotate.y = Math.asin(-row[0].z);
+  if (Math.cos(rotate.y) != 0) {
+    rotate.x = Math.atan2(row[1].z, row[2].z);
+    rotate.z = Math.atan2(row[0].y, row[0].x);
+  } else {
+    rotate.x = Math.atan2(-row[2].x, row[1].y);
+    rotate.z = 0;
+  }
+
+  // FROM http://blog.bwhiting.co.uk/?p=26
+  // scale.x2 = Math.sqrt(matrix.m11*matrix.m11 + matrix.m21*matrix.m21 + matrix.m31*matrix.m31);
+  // scale.y2 = Math.sqrt(matrix.m12*matrix.m12 + matrix.m22*matrix.m22 + matrix.m32*matrix.m32);
+  // scale.z2 = Math.sqrt(matrix.m13*matrix.m13 + matrix.m23*matrix.m23 + matrix.m33*matrix.m33);
+
+  // rotate.x2 = Math.atan2(matrix.m23/scale.z2, matrix.m33/scale.z2);
+  // rotate.y2 = -Math.asin(matrix.m13/scale.z2);
+  // rotate.z2 = Math.atan2(matrix.m12/scale.y2, matrix.m11/scale.x2);
+
+  return {
+    perspective : perspective,
+    translate   : translate,
+    skew        : skew,
+    scale       : scale,
+    rotate      : rotate
+  };
+}
+
+},{"../Vector4.js":6}],6:[function(require,module,exports){
+var vector = require('./utils/vector');
+module.exports = Vector4;
+
+/**
+ * A 4 dimensional vector
+ * @author Joe Lambert
+ * @constructor
+ */
+function Vector4(x, y, z, w) {
+  this.x = x;
+  this.y = y;
+  this.z = z;
+  this.w = w;
+  this.checkValues();
+}
+
+/**
+ * Ensure that values are not undefined
+ * @author Joe Lambert
+ * @returns null
+ */
+
+Vector4.prototype.checkValues = function() {
+  this.x = this.x || 0;
+  this.y = this.y || 0;
+  this.z = this.z || 0;
+  this.w = this.w || 0;
+};
+
+/**
+ * Get the length of the vector
+ * @author Joe Lambert
+ * @returns {float}
+ */
+
+Vector4.prototype.length = function() {
+  this.checkValues();
+  return vector.length(this);
+};
+
+
+/**
+ * Get a normalised representation of the vector
+ * @author Joe Lambert
+ * @returns {Vector4}
+ */
+
+Vector4.prototype.normalize = function() {
+	return vector.normalize(this);
+};
+
+
+/**
+ * Vector Dot-Product
+ * @param {Vector4} v The second vector to apply the product to
+ * @author Joe Lambert
+ * @returns {float} The Dot-Product of this and v.
+ */
+
+Vector4.prototype.dot = function(v) {
+  return vector.dot(this, v);
+};
+
+
+/**
+ * Vector Cross-Product
+ * @param {Vector4} v The second vector to apply the product to
+ * @author Joe Lambert
+ * @returns {Vector4} The Cross-Product of this and v.
+ */
+
+Vector4.prototype.cross = function(v) {
+  return vector.cross(this, v);
+};
+
+
+/**
+ * Helper function required for matrix decomposition
+ * A Javascript implementation of pseudo code available from http://www.w3.org/TR/css3-2d-transforms/#matrix-decomposition
+ * @param {Vector4} aPoint A 3D point
+ * @param {float} ascl
+ * @param {float} bscl
+ * @author Joe Lambert
+ * @returns {Vector4}
+ */
+
+Vector4.prototype.combine = function(bPoint, ascl, bscl) {
+  return vector.combine(this, bPoint, ascl, bscl);
+};
+
+Vector4.prototype.multiplyByMatrix = function (matrix) {
+  return vector.multiplyByMatrix(this, matrix);
+};
+
+},{"./utils/vector":7}],7:[function(require,module,exports){
+module.exports = {
+  length           : length,
+  normalize        : normalize,
+  dot              : dot,
+  cross            : cross,
+  combine          : combine,
+  multiplyByMatrix : multiplyByMatrix
+};
+
+/**
+ * Get the length of the vector
+ * @author Joe Lambert
+ * @returns {float}
+ */
+
+function length(vector) {
+  return Math.sqrt(vector.x*vector.x + vector.y*vector.y + vector.z*vector.z);
+}
+
+
+/**
+ * Get a normalized representation of the vector
+ * @author Joe Lambert
+ * @returns {Vector4}
+ */
+
+function normalize(vector) {
+  var len = length(vector),
+    v = new vector.constructor(vector.x / len, vector.y / len, vector.z / len);
+
+  return v;
+}
+
+
+/**
+ * Vector Dot-Product
+ * @param {Vector4} v The second vector to apply the product to
+ * @author Joe Lambert
+ * @returns {float} The Dot-Product of a and b.
+ */
+
+function dot(a, b) {
+  return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
+}
+
+
+/**
+ * Vector Cross-Product
+ * @param {Vector4} v The second vector to apply the product to
+ * @author Joe Lambert
+ * @returns {Vector4} The Cross-Product of a and b.
+ */
+
+function cross(a, b) {
+  return new a.constructor(
+    (a.y * b.z) - (a.z * b.y),
+    (a.z * b.x) - (a.x * b.z),
+    (a.x * b.y) - (a.y * b.x)
+  );
+}
+
+
+/**
+ * Helper function required for matrix decomposition
+ * A Javascript implementation of pseudo code available from http://www.w3.org/TR/css3-2d-transforms/#matrix-decomposition
+ * @param {Vector4} aPoint A 3D point
+ * @param {float} ascl
+ * @param {float} bscl
+ * @author Joe Lambert
+ * @returns {Vector4}
+ */
+
+function combine(aPoint, bPoint, ascl, bscl) {
+  return new aPoint.constructor(
+    (ascl * aPoint.x) + (bscl * bPoint.x),
+    (ascl * aPoint.y) + (bscl * bPoint.y),
+    (ascl * aPoint.z) + (bscl * bPoint.z)
+  );
+}
+
+function multiplyByMatrix(vector, matrix) {
+  return new vector.constructor(
+    (matrix.m11 * vector.x) + (matrix.m12 * vector.y) + (matrix.m13 * vector.z),
+    (matrix.m21 * vector.x) + (matrix.m22 * vector.y) + (matrix.m23 * vector.z),
+    (matrix.m31 * vector.x) + (matrix.m32 * vector.y) + (matrix.m33 * vector.z)
+  );
+}
+
+},{}]},{},[1])
+;
