@@ -11,6 +11,7 @@ Chrome 6+, Safari 5+, FF4+, Opera 11+, IE9+
 
 ## Getting started
 ### nodejs
+[![build status](https://secure.travis-ci.org/jfsiii/XCSSMatrix.png)](https://travis-ci.org/jfsiii/XCSSMatrix)
 ```
 npm install xcssmatrix
 var XCSSMatrix = require('xcssmatrix')
