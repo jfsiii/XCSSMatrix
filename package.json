@@ -22,7 +22,7 @@
     }
   ],
   "devDependencies": {
-    "tape": "<1"
+    "tape": "1.x"
   },
   "testling": {
     "files": "test/*.js",
