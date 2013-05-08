@@ -1,6 +1,6 @@
 {
   "name": "xcssmatrix",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Cross-browser, spec compliant, XCSSMatrix shim.",
   "main": "index.js",
   "repository": {
