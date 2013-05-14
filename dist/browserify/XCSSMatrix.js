@@ -1,6 +1,7 @@
-;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
+(function(e){if("function"==typeof bootstrap)bootstrap("xcssmatrix",e);else if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else if("undefined"!=typeof ses){if(!ses.ok())return;ses.makeXCSSMatrix=e}else"undefined"!=typeof window?window.XCSSMatrix=e():global.XCSSMatrix=e()})(function(){var define,ses,bootstrap,module,exports;
+return (function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 var XCSSMatrix = require('./lib/XCSSMatrix.js');
-module.exports = window.XCSSMatrix = XCSSMatrix;
+module.exports = XCSSMatrix;
 
 },{"./lib/XCSSMatrix.js":2}],2:[function(require,module,exports){
 var utils = {
@@ -409,10 +410,6 @@ XCSSMatrix.prototype.toString = function () {
         ')';
 };
 
-XCSSMatrix.prototype.decompose = function () {
-    return utils.matrix.decompose(this);
-};
-
 // ====== toMatrixString ====== //
 var jsFunctions = {
     matrix: function (m, o) {
@@ -557,74 +554,7 @@ function toMatrixString(transformString) {
 
 module.exports = XCSSMatrix;
 
-},{"./utils/angle":3,"./utils/matrix":4,"./utils/cssTransformString":5}],3:[function(require,module,exports){
-module.exports = {
-  deg2rad: deg2rad,
-  rad2deg: rad2deg,
-  grad2deg: grad2deg
-};
-
-/**
- *  Converts angles in degrees, which are used by the external API, to angles
- *  in radians used in internal calculations.
- *  @param {number} angle - An angle in degrees.
- *  @returns {number} radians
- */
-function deg2rad(angle) {
-    return angle * Math.PI / 180;
-}
-
-function rad2deg(radians) {
-    return radians * (180 / Math.PI);
-}
-
-function grad2deg(gradians) {
-    // 400 gradians in 360 degrees
-    return gradians / (400 / 360);
-}
-
-},{}],5:[function(require,module,exports){
-module.exports = {
-    matrixFn2d: 'matrix',
-    matrixFn3d: 'matrix3d',
-    valueToObject: valueToObject,
-    statementToObject: statementToObject,
-    stringToStatements: stringToStatements
-};
-
-function valueToObject(value) {
-    var units = /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/;
-    var parts = value.match(units) || [];
-
-    return {
-        value: parseFloat(parts[1]),
-        units: parts[2],
-        unparsed: value
-    };
-}
-
-function statementToObject(statement, skipValues) {
-    var nameAndArgs    = /(\w+)\(([^\)]+)\)/i;
-    var statementParts = statement.toString().match(nameAndArgs).slice(1);
-    var functionName   = statementParts[0];
-    var stringValues   = statementParts[1].split(/, ?/);
-    var parsedValues   = !skipValues && stringValues.map(valueToObject);
-
-    return {
-        key: functionName,
-        value: parsedValues || stringValues,
-        unparsed: statement
-    };
-}
-
-function stringToStatements(transformString) {
-    var functionSignature   = /(\w+)\([^\)]+\)/ig;
-    var transformStatements = transformString.match(functionSignature) || [];
-
-    return transformStatements;
-}
-
-},{}],4:[function(require,module,exports){
+},{"./utils/angle":3,"./utils/matrix":4,"./utils/cssTransformString":5}],4:[function(require,module,exports){
 module.exports = {
   determinant2x2: determinant2x2,
   determinant3x3: determinant3x3,
@@ -633,8 +563,7 @@ module.exports = {
   isIdentityOrTranslation: isIdentityOrTranslation,
   adjoint: adjoint,
   inverse: inverse,
-  multiply: multiply,
-  decompose: decompose
+  multiply: multiply
 };
 
 /**
@@ -831,332 +760,73 @@ function transpose(matrix) {
   return result;
 }
 
-/*
-  Input:  matrix      ; a 4x4 matrix
-  Output: translation ; a 3 component vector
-          scale       ; a 3 component vector
-          skew        ; skew factors XY,XZ,YZ represented as a 3 component vector
-          perspective ; a 4 component vector
-          rotate  ; a 4 component vector
-  Returns false if the matrix cannot be decomposed, true if it can
-*/
-var Vector4 = require('../Vector4.js');
-function decompose(matrix) {
-  var perspectiveMatrix, rightHandSide, inversePerspectiveMatrix, transposedInversePerspectiveMatrix,
-      perspective, translate, row, i, len, scale, skew, pdum3, rotate;
-
-  // Normalize the matrix.
-  if (matrix.m33 == 0) { return false; }
-
-  for (i = 1; i <= 4; i++) {
-    for (j = 1; j < 4; j++) {
-      matrix['m'+i+j] /= matrix.m44;
-    }
-  }
-
-  // perspectiveMatrix is used to solve for perspective, but it also provides
-  // an easy way to test for singularity of the upper 3x3 component.
-  perspectiveMatrix = matrix;
-  perspectiveMatrix.m14 = 0;
-  perspectiveMatrix.m24 = 0;
-  perspectiveMatrix.m34 = 0;
-  perspectiveMatrix.m44 = 1;
-
-  if (determinant4x4(perspectiveMatrix) == 0) {
-    return false;
-  }
-
-  // First, isolate perspective.
-  if (matrix.m14 != 0 || matrix.m24 != 0 || matrix.m34 != 0) {
-    // rightHandSide is the right hand side of the equation.
-    rightHandSide = new Vector4(matrix.m14, matrix.m24, matrix.m34, matrix.m44);
-
-    // Solve the equation by inverting perspectiveMatrix and multiplying
-    // rightHandSide by the inverse.
-    inversePerspectiveMatrix = inverse(perspectiveMatrix);
-    transposedInversePerspectiveMatrix = transpose(inversePerspectiveMatrix);
-    perspective = rightHandSide.multiplyByMatrix(transposedInversePerspectiveMatrix);
-  }
-  else {
-    // No perspective.
-    perspective = new Vector4(0, 0, 0, 1);
-  }
-
-  // Next take care of translation
-  translate = new Vector4(matrix.m41, matrix.m42, matrix.m43);
-
-  // Now get scale and shear. 'row' is a 3 element array of 3 component vectors
-  row = [ new Vector4(), new Vector4(), new Vector4() ];
-  for (i = 1, len = row.length; i < len; i++) {
-    row[i-1].x = matrix['m'+i+'1'];
-    row[i-1].y = matrix['m'+i+'2'];
-    row[i-1].z = matrix['m'+i+'3'];
-  }
-
-  // Compute X scale factor and normalize first row.
-  scale = new Vector4();
-  skew = new Vector4();
-
-  scale.x = row[0].length();
-  row[0] = row[0].normalize();
-
-  // Compute XY shear factor and make 2nd row orthogonal to 1st.
-  skew.x = row[0].dot(row[1]);
-  row[1] = row[1].combine(row[0], 1.0, -skew.x);
-
-  // Now, compute Y scale and normalize 2nd row.
-  scale.y = row[1].length();
-  row[1] = row[1].normalize();
-  skew.x /= scale.y;
-
-  // Compute XZ and YZ shears, orthogonalize 3rd row
-  skew.y = row[0].dot(row[2]);
-  row[2] = row[2].combine(row[0], 1.0, -skew.y);
-  skew.z = row[1].dot(row[2]);
-  row[2] = row[2].combine(row[1], 1.0, -skew.z);
-
-  // Next, get Z scale and normalize 3rd row.
-  scale.z = row[2].length();
-  row[2] = row[2].normalize();
-  skew.y = (skew.y / scale.z) || 0;
-  skew.z = (skew.z / scale.z) || 0;
-
-  // At this point, the matrix (in rows) is orthonormal.
-  // Check for a coordinate system flip.  If the determinant
-  // is -1, then negate the matrix and the scaling factors.
-  pdum3 = row[1].cross(row[2]);
-  if (row[0].dot(pdum3) < 0) {
-    for (i = 0; i < 3; i++) {
-      scale.x *= -1;
-      row[i].x *= -1;
-      row[i].y *= -1;
-      row[i].z *= -1;
-    }
-  }
-
-  // Now, get the rotations out
-  // FROM W3C
-  rotate = new Vector4();
-  rotate.x = 0.5 * Math.sqrt(Math.max(1 + row[0].x - row[1].y - row[2].z, 0));
-  rotate.y = 0.5 * Math.sqrt(Math.max(1 - row[0].x + row[1].y - row[2].z, 0));
-  rotate.z = 0.5 * Math.sqrt(Math.max(1 - row[0].x - row[1].y + row[2].z, 0));
-  rotate.w = 0.5 * Math.sqrt(Math.max(1 + row[0].x + row[1].y + row[2].z, 0));
-
-  // if (row[2].y > row[1].z) rotate[0] = -rotate[0];
-  // if (row[0].z > row[2].x) rotate[1] = -rotate[1];
-  // if (row[1].x > row[0].y) rotate[2] = -rotate[2];
-
-  // FROM MORF.JS
-  rotate.y = Math.asin(-row[0].z);
-  if (Math.cos(rotate.y) != 0) {
-    rotate.x = Math.atan2(row[1].z, row[2].z);
-    rotate.z = Math.atan2(row[0].y, row[0].x);
-  } else {
-    rotate.x = Math.atan2(-row[2].x, row[1].y);
-    rotate.z = 0;
-  }
-
-  // FROM http://blog.bwhiting.co.uk/?p=26
-  // scale.x2 = Math.sqrt(matrix.m11*matrix.m11 + matrix.m21*matrix.m21 + matrix.m31*matrix.m31);
-  // scale.y2 = Math.sqrt(matrix.m12*matrix.m12 + matrix.m22*matrix.m22 + matrix.m32*matrix.m32);
-  // scale.z2 = Math.sqrt(matrix.m13*matrix.m13 + matrix.m23*matrix.m23 + matrix.m33*matrix.m33);
-
-  // rotate.x2 = Math.atan2(matrix.m23/scale.z2, matrix.m33/scale.z2);
-  // rotate.y2 = -Math.asin(matrix.m13/scale.z2);
-  // rotate.z2 = Math.atan2(matrix.m12/scale.y2, matrix.m11/scale.x2);
-
-  return {
-    perspective : perspective,
-    translate   : translate,
-    skew        : skew,
-    scale       : scale,
-    rotate      : rotate
-  };
-}
-
-},{"../Vector4.js":6}],6:[function(require,module,exports){
-var vector = require('./utils/vector');
-module.exports = Vector4;
-
-/**
- * A 4 dimensional vector
- * @author Joe Lambert
- * @constructor
- */
-function Vector4(x, y, z, w) {
-  this.x = x;
-  this.y = y;
-  this.z = z;
-  this.w = w;
-  this.checkValues();
-}
-
-/**
- * Ensure that values are not undefined
- * @author Joe Lambert
- * @returns null
- */
-
-Vector4.prototype.checkValues = function() {
-  this.x = this.x || 0;
-  this.y = this.y || 0;
-  this.z = this.z || 0;
-  this.w = this.w || 0;
-};
-
-/**
- * Get the length of the vector
- * @author Joe Lambert
- * @returns {float}
- */
-
-Vector4.prototype.length = function() {
-  this.checkValues();
-  return vector.length(this);
-};
-
-
-/**
- * Get a normalised representation of the vector
- * @author Joe Lambert
- * @returns {Vector4}
- */
-
-Vector4.prototype.normalize = function() {
-	return vector.normalize(this);
-};
-
-
-/**
- * Vector Dot-Product
- * @param {Vector4} v The second vector to apply the product to
- * @author Joe Lambert
- * @returns {float} The Dot-Product of this and v.
- */
-
-Vector4.prototype.dot = function(v) {
-  return vector.dot(this, v);
-};
-
-
-/**
- * Vector Cross-Product
- * @param {Vector4} v The second vector to apply the product to
- * @author Joe Lambert
- * @returns {Vector4} The Cross-Product of this and v.
- */
-
-Vector4.prototype.cross = function(v) {
-  return vector.cross(this, v);
-};
-
-
-/**
- * Helper function required for matrix decomposition
- * A Javascript implementation of pseudo code available from http://www.w3.org/TR/css3-2d-transforms/#matrix-decomposition
- * @param {Vector4} aPoint A 3D point
- * @param {float} ascl
- * @param {float} bscl
- * @author Joe Lambert
- * @returns {Vector4}
- */
-
-Vector4.prototype.combine = function(bPoint, ascl, bscl) {
-  return vector.combine(this, bPoint, ascl, bscl);
-};
-
-Vector4.prototype.multiplyByMatrix = function (matrix) {
-  return vector.multiplyByMatrix(this, matrix);
-};
-
-},{"./utils/vector":7}],7:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 module.exports = {
-  length           : length,
-  normalize        : normalize,
-  dot              : dot,
-  cross            : cross,
-  combine          : combine,
-  multiplyByMatrix : multiplyByMatrix
+  deg2rad: deg2rad,
+  rad2deg: rad2deg,
+  grad2deg: grad2deg
 };
 
 /**
- * Get the length of the vector
- * @author Joe Lambert
- * @returns {float}
+ *  Converts angles in degrees, which are used by the external API, to angles
+ *  in radians used in internal calculations.
+ *  @param {number} angle - An angle in degrees.
+ *  @returns {number} radians
  */
-
-function length(vector) {
-  return Math.sqrt(vector.x*vector.x + vector.y*vector.y + vector.z*vector.z);
+function deg2rad(angle) {
+    return angle * Math.PI / 180;
 }
 
-
-/**
- * Get a normalized representation of the vector
- * @author Joe Lambert
- * @returns {Vector4}
- */
-
-function normalize(vector) {
-  var len = length(vector),
-    v = new vector.constructor(vector.x / len, vector.y / len, vector.z / len);
-
-  return v;
+function rad2deg(radians) {
+    return radians * (180 / Math.PI);
 }
 
-
-/**
- * Vector Dot-Product
- * @param {Vector4} v The second vector to apply the product to
- * @author Joe Lambert
- * @returns {float} The Dot-Product of a and b.
- */
-
-function dot(a, b) {
-  return a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w;
+function grad2deg(gradians) {
+    // 400 gradians in 360 degrees
+    return gradians / (400 / 360);
 }
 
+},{}],5:[function(require,module,exports){
+module.exports = {
+    matrixFn2d: 'matrix',
+    matrixFn3d: 'matrix3d',
+    valueToObject: valueToObject,
+    statementToObject: statementToObject,
+    stringToStatements: stringToStatements
+};
 
-/**
- * Vector Cross-Product
- * @param {Vector4} v The second vector to apply the product to
- * @author Joe Lambert
- * @returns {Vector4} The Cross-Product of a and b.
- */
+function valueToObject(value) {
+    var units = /([\-\+]?[0-9]+[\.0-9]*)(deg|rad|grad|px|%)*/;
+    var parts = value.match(units) || [];
 
-function cross(a, b) {
-  return new a.constructor(
-    (a.y * b.z) - (a.z * b.y),
-    (a.z * b.x) - (a.x * b.z),
-    (a.x * b.y) - (a.y * b.x)
-  );
+    return {
+        value: parseFloat(parts[1]),
+        units: parts[2],
+        unparsed: value
+    };
 }
 
+function statementToObject(statement, skipValues) {
+    var nameAndArgs    = /(\w+)\(([^\)]+)\)/i;
+    var statementParts = statement.toString().match(nameAndArgs).slice(1);
+    var functionName   = statementParts[0];
+    var stringValues   = statementParts[1].split(/, ?/);
+    var parsedValues   = !skipValues && stringValues.map(valueToObject);
 
-/**
- * Helper function required for matrix decomposition
- * A Javascript implementation of pseudo code available from http://www.w3.org/TR/css3-2d-transforms/#matrix-decomposition
- * @param {Vector4} aPoint A 3D point
- * @param {float} ascl
- * @param {float} bscl
- * @author Joe Lambert
- * @returns {Vector4}
- */
-
-function combine(aPoint, bPoint, ascl, bscl) {
-  return new aPoint.constructor(
-    (ascl * aPoint.x) + (bscl * bPoint.x),
-    (ascl * aPoint.y) + (bscl * bPoint.y),
-    (ascl * aPoint.z) + (bscl * bPoint.z)
-  );
+    return {
+        key: functionName,
+        value: parsedValues || stringValues,
+        unparsed: statement
+    };
 }
 
-function multiplyByMatrix(vector, matrix) {
-  return new vector.constructor(
-    (matrix.m11 * vector.x) + (matrix.m12 * vector.y) + (matrix.m13 * vector.z),
-    (matrix.m21 * vector.x) + (matrix.m22 * vector.y) + (matrix.m23 * vector.z),
-    (matrix.m31 * vector.x) + (matrix.m32 * vector.y) + (matrix.m33 * vector.z)
-  );
+function stringToStatements(transformString) {
+    var functionSignature   = /(\w+)\([^\)]+\)/ig;
+    var transformStatements = transformString.match(functionSignature) || [];
+
+    return transformStatements;
 }
 
-},{}]},{},[1])
+},{}]},{},[1])(1)
+});
 ;
