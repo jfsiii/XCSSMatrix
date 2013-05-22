@@ -1,6 +1,6 @@
 {
-  "strict": false,
-  "quotmark": true,
   "curly": false,
-  "node": true
+  "node": true,
+  "quotmark": true,
+  "strict": false
 }
