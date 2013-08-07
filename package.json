@@ -32,8 +32,8 @@
       "firefox/3..latest",
       "safari/4..latest",
       "opera/11..latest",
-      "iphone/6..latest",
-      "ipad/6..latest"
+      "iphone/3..latest",
+      "ipad/3..latest"
     ]
   },
   "readmeFilename": "README.md",
