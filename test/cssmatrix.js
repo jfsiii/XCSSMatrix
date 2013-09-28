@@ -2,7 +2,7 @@ var XCSSMatrix = require('..');
 var test       = require('tape');
 
 // from http://src.chromium.org/svn/branches/WebKit/472/LayoutTests/transforms/cssmatrix-2d-interface.xhtml
-test('2D', function (t) {
+function test2D(t) {
     test('constructors', function (t) {
         test('should return a value when called via the default constructor', function (t) {
             var m = new XCSSMatrix();
@@ -440,10 +440,10 @@ test('2D', function (t) {
     });
 
     t.end();
-});
+}
 
 // from http://src.chromium.org/svn/branches/WebKit/472/LayoutTests/transforms/cssmatrix-3d-interface.xhtml
-test('3D', function (t) {
+function test3D(t) {
     test('constructors', function (t) {
         test('should return a value when called via the default constructor', function (t) {
             var m = new XCSSMatrix();
@@ -959,4 +959,15 @@ test('3D', function (t) {
         t.end();
     });
     t.end();
-});
+}
+
+function suite() {
+    test('2D', test2D);
+    test('3D', test3D);
+}
+
+if (process.browser) {
+    setTimeout(suite, 0);
+} else {
+    suite();
+}
